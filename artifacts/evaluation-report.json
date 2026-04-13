@@ -1,0 +1,248 @@
+{
+  "generated_at": "2026-04-13T14:36:20.516182+00:00",
+  "observability": {
+    "langsmith": {
+      "configured": true,
+      "tracing_flag_enabled": true,
+      "project": "stocks-langraph",
+      "status": "active",
+      "note": "Hosted LangSmith traces should be emitted for graph and traceable spans."
+    },
+    "runtime": {
+      "intent_parser_mode": "openrouter:openai/gpt-4o-mini",
+      "market_data_provider": "mock",
+      "intent_parser_fallback_allowed": false
+    }
+  },
+  "scenarios": [
+    {
+      "name": "quote_with_fx_routing",
+      "success": true,
+      "response": "Latest quote for SAP.DE: 181.20 EUR (~16308.00 INR at FX 90.0000).",
+      "tool_events": [
+        {
+          "tool_name": "market_data",
+          "succeeded": true,
+          "input_payload": {
+            "symbol": "SAP.DE"
+          },
+          "output_payload": {
+            "symbol": "SAP.DE",
+            "price_native": 181.2,
+            "currency_native": "EUR",
+            "price_base": null,
+            "base_currency": null,
+            "fx_rate": 1.0,
+            "as_of": "2026-04-13T14:36:16.568196Z",
+            "provider": "mock"
+          },
+          "created_at": "2026-04-13T14:36:16.568375Z",
+          "error": null
+        },
+        {
+          "tool_name": "fx_conversion",
+          "succeeded": true,
+          "input_payload": {
+            "amount": 181.2,
+            "from_currency": "EUR",
+            "to_currency": "INR"
+          },
+          "output_payload": {
+            "fx_rate": 90.0,
+            "price_base": 16308.0
+          },
+          "created_at": "2026-04-13T14:36:16.569496Z",
+          "error": null
+        }
+      ],
+      "analytics": {
+        "route_path": [
+          "bootstrap",
+          "guard",
+          "intent",
+          "price",
+          "fx",
+          "finalize"
+        ],
+        "decision_count": 4,
+        "tool_call_count": 2,
+        "input_tokens": 199,
+        "output_tokens": 21,
+        "total_tokens": 220,
+        "estimated_cost_usd": 4.245e-05,
+        "approval_pending": false,
+        "market_data_provider": "mock",
+        "intent_parser_mode": "openrouter:openai/gpt-4o-mini",
+        "langsmith_tracing_enabled": true,
+        "langsmith_project": "stocks-langraph"
+      }
+    },
+    {
+      "name": "buy_requires_human_approval",
+      "success": true,
+      "approval_required": true,
+      "approval_response": "Approval required to buy 2 shares of SAP.DE for approximately 32616.00 INR.",
+      "execution_response": "BUY order executed for 2 shares of SAP.DE at 16308.00 INR each. Notional: 32616.00 INR.",
+      "analytics": {
+        "route_path": [
+          "bootstrap",
+          "guard",
+          "intent",
+          "price",
+          "fx",
+          "approval_request",
+          "human_approval",
+          "execute_order",
+          "finalize"
+        ],
+        "decision_count": 6,
+        "tool_call_count": 2,
+        "input_tokens": 201,
+        "output_tokens": 21,
+        "total_tokens": 222,
+        "estimated_cost_usd": 4.275e-05,
+        "approval_pending": false,
+        "market_data_provider": "mock",
+        "intent_parser_mode": "openrouter:openai/gpt-4o-mini",
+        "langsmith_tracing_enabled": true,
+        "langsmith_project": "stocks-langraph"
+      }
+    },
+    {
+      "name": "checkpoint_thread_isolation",
+      "success": true,
+      "stateful_thread_response": "Base currency: INR | Cash: 967384.00 INR | Market value: 32616.00 INR | Total equity: 1000000.00 INR | Holdings: SAP.DE x 2.0 @ 16308.00 INR",
+      "isolated_thread_response": "Base currency: INR | Cash: 1000000.00 INR | Market value: 0.00 INR | Total equity: 1000000.00 INR | Holdings: none",
+      "analytics": {
+        "route_path": [
+          "bootstrap",
+          "guard",
+          "intent",
+          "portfolio",
+          "finalize"
+        ],
+        "decision_count": 2,
+        "tool_call_count": 0,
+        "input_tokens": 199,
+        "output_tokens": 31,
+        "total_tokens": 230,
+        "estimated_cost_usd": 4.845e-05,
+        "approval_pending": false,
+        "market_data_provider": "mock",
+        "intent_parser_mode": "openrouter:openai/gpt-4o-mini",
+        "langsmith_tracing_enabled": true,
+        "langsmith_project": "stocks-langraph"
+      }
+    }
+  ],
+  "turn_observations": [
+    {
+      "turn_id": "turn_dcef915fb209",
+      "thread_id": "eval_47f6429c0e62-quote",
+      "user_message": "Quote SAP.DE",
+      "assistant_response": "Latest quote for SAP.DE: 181.20 EUR (~16308.00 INR at FX 90.0000).",
+      "route_path": [
+        "bootstrap",
+        "guard",
+        "intent",
+        "price",
+        "fx",
+        "finalize"
+      ],
+      "decision_count": 4,
+      "tool_call_count": 2,
+      "interrupted": false,
+      "approval_status": null,
+      "input_tokens": 199,
+      "output_tokens": 21,
+      "total_tokens": 220,
+      "estimated_cost_usd": 4.245e-05,
+      "created_at": "2026-04-13T14:36:16.570230Z"
+    },
+    {
+      "turn_id": "turn_35b971074168",
+      "thread_id": "eval_47f6429c0e62-buy",
+      "user_message": "Buy 2 SAP.DE",
+      "assistant_response": "BUY order executed for 2 shares of SAP.DE at 16308.00 INR each. Notional: 32616.00 INR.",
+      "route_path": [
+        "bootstrap",
+        "guard",
+        "intent",
+        "price",
+        "fx",
+        "approval_request",
+        "human_approval",
+        "execute_order",
+        "finalize"
+      ],
+      "decision_count": 6,
+      "tool_call_count": 2,
+      "interrupted": false,
+      "approval_status": "APPROVED",
+      "input_tokens": 201,
+      "output_tokens": 21,
+      "total_tokens": 222,
+      "estimated_cost_usd": 4.275e-05,
+      "created_at": "2026-04-13T14:36:17.629085Z"
+    },
+    {
+      "turn_id": "turn_652e30af99f2",
+      "thread_id": "eval_47f6429c0e62-buy",
+      "user_message": "Show my portfolio",
+      "assistant_response": "Base currency: INR | Cash: 967384.00 INR | Market value: 32616.00 INR | Total equity: 1000000.00 INR | Holdings: SAP.DE x 2.0 @ 16308.00 INR",
+      "route_path": [
+        "bootstrap",
+        "guard",
+        "intent",
+        "portfolio",
+        "finalize"
+      ],
+      "decision_count": 2,
+      "tool_call_count": 0,
+      "interrupted": false,
+      "approval_status": null,
+      "input_tokens": 199,
+      "output_tokens": 31,
+      "total_tokens": 230,
+      "estimated_cost_usd": 4.845e-05,
+      "created_at": "2026-04-13T14:36:19.177291Z"
+    },
+    {
+      "turn_id": "turn_5088713a3d78",
+      "thread_id": "eval_47f6429c0e62-empty",
+      "user_message": "Show my portfolio",
+      "assistant_response": "Base currency: INR | Cash: 1000000.00 INR | Market value: 0.00 INR | Total equity: 1000000.00 INR | Holdings: none",
+      "route_path": [
+        "bootstrap",
+        "guard",
+        "intent",
+        "portfolio",
+        "finalize"
+      ],
+      "decision_count": 2,
+      "tool_call_count": 0,
+      "interrupted": false,
+      "approval_status": null,
+      "input_tokens": 199,
+      "output_tokens": 31,
+      "total_tokens": 230,
+      "estimated_cost_usd": 4.845e-05,
+      "created_at": "2026-04-13T14:36:20.512716Z"
+    }
+  ],
+  "summary": {
+    "total_scenarios": 3,
+    "passed_scenarios": 3,
+    "pass_rate": 1.0,
+    "total_turn_observations": 4,
+    "total_decision_events": 14,
+    "total_tool_events": 4,
+    "token_usage": {
+      "input_tokens": 798,
+      "output_tokens": 104,
+      "total_tokens": 902
+    },
+    "estimated_cost_usd": 0.0001821,
+    "langsmith_tracing_enabled": true
+  }
+}
