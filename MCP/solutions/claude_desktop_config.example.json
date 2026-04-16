@@ -1,0 +1,77 @@
+{
+  "mcpServers": {
+    "resume_shortlister_basic": {
+      "command": "C:/Users/Admin/AppData/Local/Programs/Python/Python311/python.exe",
+      "args": [
+        "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/basic_resume_mcp.py"
+      ],
+      "env": {
+        "RESUME_DIR": "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/assets"
+      }
+    },
+    "resume_shortlister_enhanced": {
+      "command": "C:/Users/Admin/AppData/Local/Programs/Python/Python311/python.exe",
+      "args": [
+        "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/langchain_resume_mcp.py"
+      ],
+      "env": {
+        "RESUME_DIR": "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/assets",
+        "LLM_PROVIDER": "openrouter",
+        "OPENROUTER_API_KEY": "<YOUR_OPENROUTER_API_KEY>",
+        "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+        "OPENROUTER_MODEL": "openai/gpt-4o-mini",
+        "OPENROUTER_EMBEDDING_MODEL": "openai/text-embedding-3-small",
+        "OPENROUTER_APP_NAME": "Resume Shortlister MCP Demo"
+      }
+    },
+    "resume_shortlister_explainable": {
+      "command": "C:/Users/Admin/AppData/Local/Programs/Python/Python311/python.exe",
+      "args": [
+        "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/explainable_shortlisting_mcp.py"
+      ],
+      "env": {
+        "RESUME_DIR": "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/assets",
+        "RANKING_STATE_DIR": "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/ranking_state",
+        "LLM_PROVIDER": "openrouter",
+        "OPENROUTER_API_KEY": "<YOUR_OPENROUTER_API_KEY>",
+        "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+        "OPENROUTER_MODEL": "openai/gpt-4o-mini",
+        "OPENROUTER_EMBEDDING_MODEL": "openai/text-embedding-3-small",
+        "OPENROUTER_APP_NAME": "Resume Shortlister MCP Demo"
+      }
+    },
+    "hiring_orchestrator": {
+      "command": "C:/Users/Admin/AppData/Local/Programs/Python/Python311/python.exe",
+      "args": [
+        "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/hiring_orchestrator_mcp.py"
+      ],
+      "env": {
+        "RESUME_DIR": "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/assets",
+        "WORKFLOW_STATE_DIR": "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/workflow_state",
+        "LLM_PROVIDER": "openrouter",
+        "OPENROUTER_API_KEY": "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",
+        "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+        "OPENROUTER_MODEL": "openai/gpt-4o-mini",
+        "OPENROUTER_EMBEDDING_MODEL": "openai/text-embedding-3-small",
+        "OPENROUTER_APP_NAME": "Resume Shortlister MCP Demo"
+      }
+    },
+    "talent_intelligence_rag": {
+      "command": "C:/Users/Admin/AppData/Local/Programs/Python/Python311/python.exe",
+      "args": [
+        "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/talent_intelligence_rag_mcp.py"
+      ],
+      "env": {
+        "RESUME_DIR": "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/assets",
+        "KNOWLEDGE_BASE_DIR": "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/knowledge_base",
+        "QUERY_STATE_DIR": "C:/Users/Admin/Downloads/ai-hackathon-classes-ORGINIT-366-MCP/MCP-Resume-Shortlister/MCP/solutions/query_state",
+        "LLM_PROVIDER": "openrouter",
+        "OPENROUTER_API_KEY": "<YOUR_OPENROUTER_API_KEY>",
+        "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+        "OPENROUTER_MODEL": "openai/gpt-4o-mini",
+        "OPENROUTER_EMBEDDING_MODEL": "openai/text-embedding-3-small",
+        "OPENROUTER_APP_NAME": "Resume Shortlister MCP Demo"
+      }
+    }
+  }
+}
