@@ -1,0 +1,159 @@
+app:
+  name: fixit-ai-support
+  environment: local
+  timezone: Asia/Kolkata
+  state_db_path: state/fixit_llmops.sqlite3
+  log_level: INFO
+
+llm:
+  provider: openrouter-compatible
+  base_url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+  api_key_env: OPENROUTER_API_KEY
+  timeout_seconds: 30
+  max_retries: 1
+  dry_run: ${FIXIT_DRY_RUN:false}
+  default_headers:
+    HTTP-Referer: ${OPENROUTER_HTTP_REFERER:http://localhost:8000}
+    X-Title: ${OPENROUTER_APP_NAME:FixIt AI Support}
+
+models:
+  low:
+    model_id: ${FIXIT_LOW_MODEL:openai/gpt-4.1-mini}
+    max_output_tokens: 220
+    temperature: 0.2
+    input_cost_per_1m: 0.40
+    output_cost_per_1m: 1.60
+  high:
+    model_id: ${FIXIT_HIGH_MODEL:openai/gpt-4.1}
+    max_output_tokens: 360
+    temperature: 0.15
+    input_cost_per_1m: 2.00
+    output_cost_per_1m: 8.00
+
+budget:
+  monthly_limit_usd: 500.0
+  daily_limit_usd: 16.67
+  warn_ratio: 0.80
+  degrade_ratio: 0.90
+  hard_stop_ratio: 1.00
+
+feature_flags:
+  enable_budget_guardrails: true
+  enable_hot_reload: true
+  enable_request_logging: true
+  enable_llm_classifier_fallback: false
+  enable_model_fallbacks: true
+  enable_safe_fallback: true
+
+prompts:
+  root_dir: prompts
+  selection_strategy: latest_stable
+  fallback_category: fallback
+
+classification:
+  fallback_category: fallback
+  short_query_word_threshold: 10
+  long_query_word_threshold: 18
+  very_long_query_word_threshold: 32
+  escalation_keywords:
+    - refund
+    - unsafe
+    - safety
+    - manager
+    - charged twice
+    - no show
+    - didn't show
+    - damaged
+    - emergency
+    - leak
+    - sparks
+  medium_keywords:
+    - reschedule
+    - appointment
+    - tomorrow
+    - booking
+    - schedule
+    - availability
+    - quote
+    - estimate
+  categories:
+    faq:
+      response_type: simple
+      default_complexity: low
+      keywords:
+        - hours
+        - open
+        - availability
+        - price
+        - pricing
+        - service area
+        - insured
+        - licensed
+        - weekend
+      regexes:
+        - "\\bwhat are your hours\\b"
+        - "\\bwhen are you open\\b"
+        - "\\bdo you offer\\b"
+    booking:
+      response_type: standard
+      default_complexity: medium
+      keywords:
+        - book
+        - booking
+        - schedule
+        - reschedule
+        - cancel
+        - appointment
+        - cleaner
+        - plumber
+        - electrician
+        - slot
+      regexes:
+        - "\\bcan i reschedule\\b"
+        - "\\bmove my appointment\\b"
+        - "\\bbook a\\b"
+    complaint:
+      response_type: complex
+      default_complexity: high
+      keywords:
+        - refund
+        - complaint
+        - no show
+        - didn't show
+        - charged twice
+        - damage
+        - damaged
+        - poor service
+        - escalate
+        - manager
+        - angry
+      regexes:
+        - "\\bneed refund\\b"
+        - "\\bdidn.t show up\\b"
+        - "\\bwant to complain\\b"
+
+routing:
+  default_model_alias: low
+  complexity_to_model:
+    low: low
+    medium: low
+    high: high
+  fallback_order:
+    high:
+      - low
+    low: []
+
+analysis:
+  monthly_queries: 300000
+  legacy_all_high_cost_usd: 3000.0
+  projected_query_mix:
+    low: 0.85
+    high: 0.15
+  average_tokens:
+    low:
+      prompt: 350
+      completion: 180
+    high:
+      prompt: 650
+      completion: 260
+

@@ -1,0 +1,8 @@
+query,category,complexity,expected_response_type
+"What are your hours?",faq,low,simple
+"My plumber didn't show up, need refund",complaint,high,complex
+"Can I reschedule my cleaning appointment?",booking,medium,standard
+"Do you service Brooklyn on weekends?",faq,low,simple
+"I was charged twice for electrical work and need this fixed today",complaint,high,complex
+"Please move my cleaner appointment from Friday to Saturday morning",booking,medium,standard
+
