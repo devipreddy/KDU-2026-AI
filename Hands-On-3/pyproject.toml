@@ -1,0 +1,23 @@
+[project]
+name = "tri-model-assistant"
+version = "0.1.0"
+description = "A locally hosted tri-model AI assistant for summarization and question answering."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "langchain>=0.3.0",
+  "PyYAML>=6.0",
+  "sentencepiece>=0.2.0",
+  "torch>=2.0.0",
+  "transformers>=4.40.0",
+]
+
+[project.scripts]
+tri-model-assistant = "tri_model_assistant.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["tri_model_assistant"]
