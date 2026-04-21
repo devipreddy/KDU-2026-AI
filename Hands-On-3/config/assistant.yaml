@@ -1,0 +1,40 @@
+runtime:
+  device: auto
+  qa_confidence_threshold: 0.2
+
+length_profiles:
+  short:
+    min_words: 60
+    max_words: 100
+    instructions: "Rewrite the summary as a crisp executive brief in 1 to 2 sentences."
+  medium:
+    min_words: 120
+    max_words: 220
+    instructions: "Rewrite the summary in 3 to 5 balanced sentences while keeping the most important details."
+  long:
+    min_words: 220
+    max_words: 320
+    instructions: "Rewrite the summary in 6 to 8 detailed sentences with richer supporting detail and no filler."
+
+models:
+  summarizer:
+    model_name: "sshleifer/distilbart-cnn-12-6"
+    task: "summarization"
+    max_input_tokens: 768
+    chunk_overlap_tokens: 64
+    generation_kwargs:
+      min_length: 40
+      max_length: 120
+      do_sample: false
+
+  refiner:
+    model_name: "google/flan-t5-small"
+    task: "text2text-generation"
+    generation_kwargs:
+      max_new_tokens: 220
+      do_sample: false
+
+  qa:
+    model_name: "deepset/roberta-base-squad2"
+    task: "question-answering"
+    generation_kwargs: {}
