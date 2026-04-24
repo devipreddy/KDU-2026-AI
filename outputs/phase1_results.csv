@@ -1,0 +1,536 @@
+file,ocr_model,ocr_output,llm_model,llm_output
+660172199-Os-Gate-Smasher-notes_page-0005.jpg,Hugging Face TrOCR,(RM),gpt-4o-mini,"{
+  ""layout_type"": ""Multi-column with diagram and two text sections (Processes vs Threads)"",
+  ""columns"": [
+    {
+      ""title"": ""Processes"",
+      ""content"": [
+        ""1) Processes"",
+        ""2) System calls involved in process"",
+        ""3) Different processes have different copies of Data files, code"",
+        ""4) [unclear] switching is shown"",
+        ""5) Blocking a process will not block another"",
+        ""6) Independent"",
+        ""7) Interdependent""
+      ]
+    },
+    {
+      ""title"": ""Threads"",
+      ""content"": [
+        ""1) There is no system call involved"",
+        ""2) OS treats different processes threads differently"",
+        ""3) Threads share same copy of code & data"",
+        ""4) Context switching is faster"",
+        ""5) Blocking a thread will block entire process"",
+        ""6) Independent"",
+        ""7) Interdependent""
+      ]
+    }
+  ],
+  ""tables"": [],
+  ""handwriting"": [
+    ""User Mode Vs kernal Mode"",
+    ""Process Executing"",
+    ""Get System Call"",
+    ""Read()"",
+    ""Return from System Call"",
+    ""Execute System Call"",
+    ""Mode bit = 0"",
+    ""Mode bit = 1"",
+    ""Kernel Mode"",
+    ""APIs""
+  ],
+  ""notes"": [
+    ""Happiness arises in a state of peace, not of tumult.""
+  ]
+}"
+660172199-Os-Gate-Smasher-notes_page-0008.jpg,Hugging Face TrOCR,ITEM OVER,gpt-4o-mini,"{
+  ""layout_type"": ""multi-column header with side-by-side calendars"",
+  ""columns"": [
+    {
+      ""id"": 1,
+      ""content"": [
+        ""February 2021"",
+        ""03"",
+        ""March 2021"",
+        ""January"",
+        ""11"",
+        ""Day (011-354) Week 03 • Monday""
+      ]
+    },
+    {
+      ""id"": 2,
+      ""content"": [
+        ""CPU Scheduling""
+      ]
+    },
+    {
+      ""id"": 3,
+      ""content"": [
+        ""January 11"",
+        ""Day (011-354) Week 03 • Monday""
+      ]
+    }
+  ],
+  ""tables"": [],
+  ""handwriting"": [
+    ""CPU Scheduling"",
+    ""→ Arrival time: The time at which a process enter the Ready Queue or state."",
+    ""→ Burst Time : Time required by a process to get & execute on CPU."",
+    ""→ Completion time: The time at which process completes its execution."",
+    ""→ Turn around time: Completion time - Arrival Time"",
+    ""→ Waiting time: Turn around time - Burst time"",
+    ""→ Response time: (The time at which a process get CPU first time) - Arrival time""
+  ],
+  ""notes"": [
+    ""FCFS"",
+    ""Process No | Arrival Time | Burst Time/Completion Time | TAT | WT | RT"",
+    ""Life is just one damned thing after another.""
+  ]
+}"
+660172199-Os-Gate-Smasher-notes_page-0009.jpg,Hugging Face TrOCR,ITEM OVER,gpt-4o-mini,"{
+  ""layout_type"": ""multi-column header and main data table with notes and a Gantt-chart area"",
+  ""columns"": [
+    {
+      ""name"": ""Header Left"",
+      ""description"": ""Date and day: '12 January' with 'Tuesday • Week 03 Dny (012-353)' line""
+    },
+    {
+      ""name"": ""Header Right"",
+      ""description"": ""Mini-calendar snippet (December 2020 / January 2021)""
+    },
+    {
+      ""name"": ""Main Table"",
+      ""description"": ""Table labeled 'Process No', with timing columns""
+    },
+    {
+      ""name"": ""Notes / Annotations"",
+      ""description"": ""Lower sections containing criteria, mode, and other notes""
+    }
+  ],
+  ""tables"": [
+    {
+      ""name"": ""Process Times"",
+      ""headers"": [""Process No"", ""AT"", ""BT"", ""CT"", ""TAT"", ""WT"", ""RT""],
+      ""rows"": [
+        {
+          ""Process No"": ""P1"",
+          ""AT"": ""1"",
+          ""BT"": ""3"",
+          ""CT"": ""6"",
+          ""TAT"": ""5"",
+          ""WT"": ""2"",
+          ""RT"": ""[unclear]""
+        },
+        {
+          ""Process No"": ""P2"",
+          ""AT"": ""2"",
+          ""BT"": ""4"",
+          ""CT"": ""10"",
+          ""TAT"": ""8"",
+          ""WT"": ""4"",
+          ""RT"": ""[unclear]""
+        },
+        {
+          ""Process No"": ""P3"",
+          ""AT"": ""1"",
+          ""BT"": ""2"",
+          ""CT"": ""3"",
+          ""TAT"": ""2"",
+          ""WT"": ""0"",
+          ""RT"": ""[unclear]""
+        },
+        {
+          ""Process No"": ""P4"",
+          ""AT"": ""4"",
+          ""BT"": ""4"",
+          ""CT"": ""19"",
+          ""TAT"": ""16"",
+          ""WT"": ""6"",
+          ""RT"": ""[unclear]""
+        }
+      ]
+    }
+  ],
+  ""handwriting"": [
+    ""STF"",
+    ""Caiteria : \""Burst Time\"""",
+    ""Mode : \""Non-Preemptive\"""",
+    ""Life is a reciprocal exchange. To move forward, you have to give back."",
+    ""Gantt Chart""
+  ],
+  ""notes"": [
+    ""NOTES"",
+    ""Gantt Chart"",
+    ""Time""
+  ]
+}"
+660172199-Os-Gate-Smasher-notes_page-0015.jpg,Hugging Face TrOCR,ITEM,gpt-4o-mini,"{
+  ""layout_type"": ""two_column"",
+  ""columns"": [
+    {
+      ""id"": ""col-left"",
+      ""label"": ""Main Handwriting"",
+      ""reading_order"": ""top-to-bottom, left-to-right""
+    },
+    {
+      ""id"": ""col-right"",
+      ""label"": ""Calendar/Diagrams"",
+      ""reading_order"": ""top-to-bottom, right-to-left""
+    }
+  ],
+  ""tables"": [],
+  ""handwriting"": [
+    {
+      ""text"": ""Critical Section - It is part of the program where shared resources are accessed by various processes (cooperative)."",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""Synchronization mechanism"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""1) Conditions & Rules"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""2) Mutual Exclusion"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""3) Progress"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""4) Bounded Wait"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""4) No assumption related to HW speed."",
+      ""unclear"": true
+    },
+    {
+      ""text"": ""I Primary"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""II Secondary"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""Include"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""#include"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""Entry Section"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""Exit Section"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""Count CS"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""Exit Code"",
+      ""unclear"": false
+    },
+    {
+      ""text"": ""The supreme irony of life is that hardly anyone"",
+      ""unclear"": false
+    }
+  ],
+  ""notes"": [
+    ""Page contains a calendar header at the top and a set of hand-drawn diagrams (entry/exit sections) in the lower part."",
+    ""Reading order starts with the left column (main notes) and then references in the right column if needed."",
+    ""Some lines are handwritten with slant; where uncertain, text is marked as [unclear].""
+  ]
+}"
+660172199-Os-Gate-Smasher-notes_page-0026.jpg,Hugging Face TrOCR,ITEM,gpt-4o-mini,"{
+  ""layout_type"": ""multi-column table"",
+  ""columns"": [
+    {""name"": ""Process"", ""data"": [""P1"",""P2"",""P3"",""P4"",""P5""]},
+    {""name"": ""Allocation (A B C)"", ""data"": [""0 1 0"",""2 0 0"",""3 0 2"",""2 1 1"",""0 0 2""]},
+    {""name"": ""Max Need (A B C)"", ""data"": [""7 5 3"",""3 2 2"",""9 0 2"",""4 2 2"",""5 3 3""]},
+    {""name"": ""Available (A B C)"", ""data"": [""3 3 2"",""3 3 2"",""3 3 2"",""3 3 2"",""3 3 2""]},
+    {""name"": ""Remaining Need (A B C)"", ""data"": [""7 4 3"",""1 2 2"",""6 0 0"",""2 1 1"",""5 3 1""]}
+  ],
+  ""tables"": [
+    {
+      ""title"": ""Banker's Algorithm - Deadlock Avoidance"",
+      ""rows"": [
+        {""Process"": ""P1"", ""Allocation"": ""0 1 0"", ""Max Need"": ""7 5 3"", ""Available"": ""3 3 2"", ""Remaining Need"": ""7 4 3""},
+        {""Process"": ""P2"", ""Allocation"": ""2 0 0"", ""Max Need"": ""3 2 2"", ""Available"": ""3 3 2"", ""Remaining Need"": ""1 2 2""},
+        {""Process"": ""P3"", ""Allocation"": ""3 0 2"", ""Max Need"": ""9 0 2"", ""Available"": ""3 3 2"", ""Remaining Need"": ""6 0 0""},
+        {""Process"": ""P4"", ""Allocation"": ""2 1 1"", ""Max Need"": ""4 2 2"", ""Available"": ""3 3 2"", ""Remaining Need"": ""2 1 1""},
+        {""Process"": ""P5"", ""Allocation"": ""0 0 2"", ""Max Need"": ""5 3 3"", ""Available"": ""3 3 2"", ""Remaining Need"": ""5 3 1""}
+      ]
+    }
+  ],
+  ""handwriting"": [
+    ""[unclear] Bonker's Algo (Deadlock Avoidance)"",
+    ""Process Allocation Max Need Available Remaining Need"",
+    ""P1 0 1 0 7 5 3 3 3 2 7 4 3"",
+    ""P2 2 0 0 3 2 2 3 3 2 1 2 2"",
+    ""P3 3 0 2 9 0 2 3 3 2 6 0 0"",
+    ""P4 2 1 1 4 2 2 3 3 2 2 1 1"",
+    ""P5 0 0 2 5 3 3 3 3 2 5 3 1"",
+    ""Total A=10, B=5, C=7"",
+    ""Memory Management"",
+    ""It is the process of controlling and coordinating a computer's main memory. It ensures that blocks of memory space are properly managed and allocated so the operating system applications & other running processes have the memory they need to carry out their operations.""
+  ],
+  ""notes"": [
+    ""Detected a 5-row, multi-column table with five processes (P1-P5)."",
+    ""Reading order preserved left-to-right, top-to-bottom."",
+    ""Header line includes Process, Allocation, Max Need, Available, Remaining Need.""
+  ]
+}"
+660172199-Os-Gate-Smasher-notes_page-0037.jpg,Hugging Face TrOCR,IT RM,gpt-4o-mini,"{
+  ""layout_type"": ""Two-column (left and right) with a vertical divider; header across top"",
+  ""columns"": [
+    {
+      ""title"": ""Left Column"",
+      ""content"": ""File Systems in Operating System\n\nA file is a collection of related information that is recorded on secondary storage. On file is a collection of logically related 'entities'. From user's perspective a file is the smallest amount of logical secondary storage.\n\nOperations on files\n1) Creating\n2) Reading\n3) Writing\n4) Deleting\n5) Truncating\n6) Repositioning\n\nAllocation Methods""
+    },
+    {
+      ""title"": ""Right Column"",
+      ""content"": ""File Attributes\n1) Name\n2) Extension (Type)\n3) Identifier\n4) Location\n5) Size\n6) Modified date\n7) Protection/Permission\n8) Encryption/compression\n\nAllocation Methods\nContiguous Allocation → Non-Contiguous Allocation\nLinked List Allocation\nIndexed Allocation\n\nAdvantages\nEfficient disk utilization\nNotes\n2) Access factor""
+    }
+  ],
+  ""tables"": [],
+  ""handwriting"": [
+    ""File Systems in Operating System"",
+    ""A file is a collection of related information that is recorded on secondary storage. On file is a collection of logically related 'entities'. From user perspective a file is the smallest amount of logical secondary storage."",
+    ""Operations on files | File Attributes"",
+    ""1) Creating"",
+    ""2) Reading"",
+    ""3) Writing"",
+    ""4) Deleting"",
+    ""5) Truncating"",
+    ""6) Repositioning"",
+    ""Allocation Methods"",
+    ""Contiguous Allocation"",
+    ""Non-Contiguous Allocation"",
+    ""Linked List Allocation"",
+    ""Indexed Allocation"",
+    ""File Attributes"",
+    ""1) Name"",
+    ""2) Extension (Type)"",
+    ""3) Identifier"",
+    ""4) Location"",
+    ""5) Size"",
+    ""6) Modified date"",
+    ""7) Protection/Permission"",
+    ""8) Encryption, compression"",
+    ""Advantages"",
+    ""Efficient disk utilization"",
+    ""Notes"",
+    ""2) Access factor"",
+    ""The great use of a life is to spend for something that outlasts it.""
+  ],
+  ""notes"": [
+    ""The great use of a life is to spend for something that outlasts it.""
+  ]
+}"
+WhatsApp Image 2026-04-24 at 12.22.35.jpeg,Hugging Face TrOCR,ITEM,gpt-4o-mini,"{
+  ""layout_type"": ""complex multi-column (4-column)"",
+  ""columns"": [
+    {
+      ""title"": ""Column 1"",
+      ""content"": [
+        ""RoomResults API"",
+        ""RoomModal API"",
+        ""tenants → properties → room-types → Inventory""
+      ]
+    },
+    {
+      ""title"": ""Column 2"",
+      ""content"": [
+        ""ten_id"",
+        ""name"",
+        ""config"",
+        ""domain""
+      ]
+    },
+    {
+      ""title"": ""Column 3"",
+      ""content"": [
+        ""prop_id"",
+        ""address"",
+        ""[unclear]"",
+        ""[unclear]"",
+        ""type_id"",
+        ""prop_id"",
+        ""total-rooms"",
+        ""base price"",
+        ""max- occ"",
+        ""area""
+      ]
+    },
+    {
+      ""title"": ""Column 4"",
+      ""content"": [
+        ""date"",
+        ""room-type"",
+        ""avail-rooms"",
+        ""inv_id""
+      ]
+    }
+  ],
+  ""tables"": [
+    {
+      ""header"": [""tenants"", ""properties"", ""room_types"", ""Inventory""],
+      ""rows"": [
+        [
+          ""ten-id"",
+          ""name"",
+          ""config"",
+          ""domain""
+        ],
+        [
+          ""prop-id"",
+          ""address"",
+          ""[unclear]"",
+          ""[unclear]""
+        ],
+        [
+          ""type_id"",
+          ""prop_id"",
+          ""total-rooms"",
+          ""base price"",
+          ""max occ"",
+          ""area""
+        ],
+        [
+          ""date"",
+          ""room-type"",
+          ""avail-rooms"",
+          ""inv_id""
+        ]
+      ]
+    }
+  ],
+  ""handwriting"": [
+    ""RoomResults API"",
+    ""RoomModal API"",
+    ""tenants → properties → room-types → Inventory"",
+    ""12/03/26"",
+    ""ten-id"",
+    ""name"",
+    ""config"",
+    ""domain"",
+    ""prop-id"",
+    ""address"",
+    ""total-rooms"",
+    ""base price"",
+    ""max- occ"",
+    ""area"",
+    ""date"",
+    ""room-type"",
+    ""avail-rooms"",
+    ""inv-id"",
+    ""@Search Request:"",
+    ""i/p : { tenantId, propertyId, checkin, checkout, roomcount, guestcount }"",
+    ""Response"",
+    ""filters: ["",
+    ""{ 'filters1': [ ... ] }"",
+    ""{ 'filters2': [ ... ] }"",
+    ""]"",
+    ""Roomtypes: ["",
+    ""#RoomandType fill"",
+    ""]"",
+    ""Pagination option: to be figured out""
+  ],
+  ""notes"": [
+    ""Layout appears as four vertical columns (tenants, properties, room-types, Inventory) with a top horizontal header linking them (tenants → properties → room-types → Inventory)."",
+    ""Some column headers and field names are partially unclear due to handwriting; [unclear] marks indicate uncertain text."",
+    ""The lower section contains a Search Request and a Response schema with filters, followed by notes about Roomtypes and pagination."",
+    ""Date appears as 12/03/26 on the right side of the header area.""
+  ]
+}"
+WhatsApp Image 2026-04-24 at 12.22.45.jpeg,Hugging Face TrOCR,TOTAL AMOUNT,gpt-4o-mini,"{
+  ""layout_type"": ""multi-column"",
+  ""columns"": [
+    {
+      ""title"": ""useState"",
+      ""content"": ""- react managed variables if that makes sense.\n- causes re-render of component when state changes.""
+    },
+    {
+      ""title"": ""useEffect"",
+      ""content"": ""- used for side effects\n- when you want a side effect\n- executes the callback function after render\n- used for (callback) after render\n- useEffect(() => { ... }, [])""
+    },
+    {
+      ""title"": ""useMemo"",
+      ""content"": ""- recompute a memoized value only when some thing state changes\n- which the value depends on\n- useMemo(() => { ... }, [ ... ])""
+    },
+    {
+      ""title"": ""useRef"",
+      ""content"": ""- Very very similar to state BUT IT DOES NOT CAUSE THE COMPONENT TO RE-RENDER.""
+    }
+  ],
+  ""tables"": [],
+  ""handwriting"": [
+    {
+      ""segment"": ""title"",
+      ""lines"": [
+        ""#React Hooks""
+      ]
+    },
+    {
+      ""segment"": ""col1"",
+      ""lines"": [
+        ""- useState"",
+        "" - react managed"",
+        ""   variables if that makes sense."",
+        "" - causes re-render"",
+        ""   of component when state"",
+        ""   changes.""
+      ]
+    },
+    {
+      ""segment"": ""col2"",
+      ""lines"": [
+        ""- useEffect"",
+        "" - used for side"",
+        ""   effects"",
+        "" - when you want a side effect"",
+        "" - executes the callback function"",
+        ""   after render"",
+        "" - useEffect(() => { }, [])""
+      ]
+    },
+    {
+      ""segment"": ""col3"",
+      ""lines"": [
+        ""- useMemo"",
+        "" - recompute"",
+        ""   a memoized"",
+        ""   value only when some"",
+        ""   state changes"",
+        "" - value depends"",
+        "" - useMemo(() => { ... }, [ ... ])""
+      ]
+    },
+    {
+      ""segment"": ""col4"",
+      ""lines"": [
+        ""- useRef"",
+        "" - [box] useRef"",
+        "" - Very very similar"",
+        ""   to state BUT"",
+        ""   IT DOES NOT CAUSE"",
+        ""   THE COMPONENT TO"",
+        ""   RE-RENDER.""
+      ]
+    }
+  ],
+  ""notes"": [
+    ""There appears to be a four-column layout with the main hooks presented as separate blocks: useState, useEffect, useMemo, and useRef. Handwritten lines have been transcribed per column with [unclear] notations avoided where possible.""
+  ]
+}"
