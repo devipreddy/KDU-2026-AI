@@ -1,0 +1,272 @@
+orientation,model,detail,output
+original,gpt-4.1-mini,low,"Structured Text Extraction and Analysis from Document Image:
+
+---
+
+### Layout and Reading Order:
+
+The document is a single-column handwritten note with some indentation and an embedded table-like structure. The note covers workflows and features related to a ""search rooms"" function and related UI/configuration details. 
+
+---
+
+### Sections and Content:
+
+#### 1. Top Notes:
+- **user:**  
+  - view, search, available rooms, reservation property  
+- guest user workflow:  
+  - 2 envs (environments) → dev, prod
+
+#### 2. Search Rooms:
+- For a single room type only  
+- Default config values for search from Home page  
+- Maintain session persistence (misspelled as ""petiperesistance"")
+
+#### 3. Configurability:
+- Subsections noted:  
+  - Landing page  
+  - Calendar  
+  - Pricing?  
+- Question: How does it work?
+
+---
+
+### Table-Like Structure (Headers):
+
+| Landing page          | Room Results    | Room details    | Checkout page    |
+|----------------------|-----------------|-----------------|------------------|
+
+(Note: No data rows, only column headers)
+
+---
+
+### Additional Notes (Below table):
+
+- Two ways:  
+  1. Allow users to choose a room type in landing page  
+  2. Show all room types in choose room page  
+- Landing page dropdown → config options  
+- Pricing for each room → config? How?  
+- Cause (reason): ""to store it in one way DB"" but if config then not possible
+
+---
+
+### Further Points:
+
+- Unique URL for each successful booking  
+- Work with only one assigned property  
+- Calendar shows two months with navigation arrows to browse further months  
+- Length of stay → configurable  
+- Past dates cannot be selected as start  
+
+---
+
+### Handwritten / Slanted Text:
+
+- ""petiperesistance"" is a correction attempt; intended word is ""persistence.""
+- Question marks and arrows are used to indicate uncertainty about ""pricing"" and ""how does it work?""
+- Some crossed-out words like ""page"" (in checkout page)
+
+---
+
+### Summary of Information:
+
+- The document discusses a booking/search system for rooms.
+- It highlights a guest user workflow with two environments (dev, prod).
+- Search functionality is limited to a single room type with default config values on the homepage.
+- A focus on configurability of landing page, calendar, pricing, and room selection.
+- Describes UI components like dropdowns and calendar navigation.
+- Notes about how pricing configuration could be complicated due to DB storage.
+- Ensures some booking constraints like unique URLs, single property assignment, blocking past dates, and configurable length of stay.
+- Includes a faintly drawn table-like structure indicating main parts of the booking flow (landing page, room results, room details, checkout page).
+
+---
+
+This extraction preserves original layout flow, identifies the table headers, captures notes and questions posed in the document, and reads the near-handwritten text parts.
+
+---
+
+If required, I can also organize this content into a formatted report or outline."
+original,gpt-4.1-nano,high,"**Document Layout and Content Summary**
+
+**1. Layout & Reading Order:**
+- Top section: Handwritten notes about ""users,"" ""availability,"" ""observation,"" ""property,"" ""guest user workflow,"" and ""search rooms.""
+- Main section (centered): Handwritten bullet points about ""search rooms,"" ""configurability,"" ""landing page,"" ""calendar,"" and pricing.
+- Possible table structure around the ""Room Results,"" ""Room details,"" and ""checkout page"" labels.
+- Side notes and annotations in margins, including some handwritten notes and corrections.
+
+**2. Columns & Tables:**
+- A table-like structure is suggested with columns labeled:
+  - ""Room Results""
+  - ""Room details""
+  - ""Checkout page""
+- Corresponding data points are associated with these columns:
+  - ""Room Results"": lists of room options or search outcomes.
+  - ""Room details"": specifics about each room.
+  - ""Checkout page"": corresponds to checkout process info.
+- Additional notes about ""navigation arrows"" and ""calendar shows two months.""
+
+**3. Extracted Visible Table Data:**
+| Room Results      | Room details                          | Checkout page        |
+|-------------------|----------------------------------------|----------------------|
+| (Not specified) | Details about each room (not explicitly given) | (Not specified)     |
+
+**4. Handwritten/Slanted Text & Additional Notes:**
+- ""search rooms -> only for a single room type""
+- ""default config values for search from Home page""
+- ""maintain session persistence""
+- ""configurability"" section includes several bullets:
+  - Landing page
+  - Calendar
+  - Pricing? How does it work?
+- ""allow users to choose a room type in landing page""
+- ""show all room types""
+- ""allowed URL for each successful booking""
+- ""work with only one assigned property""
+- ""calendar shows two months with navigation arrows""
+- ""length of stay configuration""
+- ""past dates cannot be selected as start""
+- Notes about storing configuration in DB but noting that it might be impossible if configuration changes.
+
+**5. Summary of Available Information:**
+- The document discusses system behavior for hotel/room booking interface.
+- Key points on user workflows, configuration options, and session persistence.
+- Emphasis on search functionality, ability to select room types, and calendar features.
+- Details about booking process, configuration storage, and user interface elements like navigation arrows.
+- Overall focus on features and configuration options for a booking system, with some notes on implementation constraints."
+rotated,gpt-4.1-mini,low,"Structured Text Output:
+
+---
+
+**Layout and Reading Order:**
+
+The document consists of two columns in handwritten notes, predominantly written vertically on the page. The first column is on the left side, the second on the right, with some bracketed connections between points. Handwritten notes contain technical points about web configuration, sessions, and UI behavior.
+
+---
+
+**Columns & Sections:**
+
+- **Left Column:**
+  1. User view considerations.
+  2. Guest user workflow.
+  3. Search rooms.
+  4. Configuration details.
+  5. Landing page.
+  6. Pricing consideration.
+
+- **Right Column:**
+  1. Successful booking URL.
+  2. Room results and details.
+  3. Two ways to show room types and booking.
+  4. Landing page dropdown options.
+  5. Config options.
+  6. Pricing setup.
+
+---
+
+**Visible Table Data:**
+
+There is a simple three-row, two-column structure represented by bracketed text:
+
+Columns:  
+- ""Room Result""  
+- ""Room details""  
+
+Rows:  
+- ""landing page""  
+- ""calendar""  
+- ""checkout""
+
+---
+
+**Extracted Handwritten / Slanted Text:**
+
+- Top left corner (slanted, partial):  
+  ""for designing stay""
+
+- Middle top (partial notes):  
+  ""try to my continue""
+
+---
+
+**Detailed Content:**
+
+- **User view / observation:**  
+  - Available in ""menus"" and ""search""  
+- **Guest user workflow:**
+  - 2 environments, dev and prod  
+- **Search rooms:**
+  - Only for a single room type  
+  - Default configuration values for search from home page  
+- **Maintain session persistence**  
+- **Configuration includes:**
+  - Landing page  
+  - Calendar  
+  - Checkout  
+- **Landing page vs calendar vs checkout page:**  
+  (Shown by bracketed alignment with ""Room Result"" and ""Room details"")
+- **Pricing:**  
+  - Question raised - ""how does it work?""  
+- **Booking URL & success:**  
+  - URL for each successful booking  
+  - Show all room types or only one  
+  - One assigned property in landing page and calendar shows two months with navigation arrows  
+  - Allow choosing room type in calendar and landing page
+- **Stay duration:**  
+  - Length of stay configuration  
+- **Dropdown on landing page and config options:**  
+  - Part date cannot be selected on start  
+- **Pricing for each room, configuration:**  
+  - Store it in DB in one way  
+  - But if config changes, not possible  
+
+---
+
+**Summary:**
+
+This document is a technical note outlining a web application's room booking workflow and configuration. It covers user views, guest workflows, session persistence, and configuration of search, landing, calendar, and checkout pages. It also addresses UI behaviors for displaying rooms and booking options, including calendar navigation and multi-month views. Pricing configuration and storage constraints are considered. The note hints at complexities in configuration change management especially related to pricing.
+
+---
+
+This completes the concise structured analysis of the document."
+rotated,gpt-4.1-nano,high,"**Document Analysis Summary:**
+
+---
+
+### Layout & Structure:
+- **Main Content Area:** Handwritten notes in blue ink, with some sections including annotations and calculations.
+- **Columns & Tables:** A table with headers “Round,” “Results,” “Room,” “Details,” containing handwritten data, possibly related to room booking or reservation details.
+- **Notable Features:** Presence of handwritten notes, slanted text, and a section with a checklist or key points. There are annotations and crossed-out words.
+
+### Identified Elements:
+- **Columns:**
+  - Round
+  - Results
+  - Room
+  - Details
+- **Table Data:**
+  - Round 2
+  - Result: USF (possibly shorthand or abbreviation)
+  - Room: Background details, possibly “lobby” or “land” (partially unclear)
+- **Notes & Annotations:**
+  - Notes on room accessibility, booking, and content management.
+  - References to “booking,” “length,” “post,” “detection,” “pricing options.”
+- **Handwritten/Slanted Text:**
+  - Contains operational notes, instructions, or planning information.
+- **Miscellaneous:**
+  - Mentions “UE,” “caption,” “background,” “content types,” “navigation.”
+
+### Visible Table Data Extracted:
+| Round | Results | Room          | Details                                               |
+|--------|---------|---------------|--------------------------------------------------------|
+| 2      | USF     | Background/land | Information related to accessibility and content navigation, approximate duration, capacity, etc. |
+
+### Summary of Information:
+- The document appears to relate to room reservations, event planning, or content management logistics.
+- Contains notes about booking procedures, content types, pricing, and options for content detection.
+- Several annotations for operational steps, including accessibility, layout, and pricing.
+- Focus on managing room content, presentation, and navigation cues.
+
+---
+
+**Note:** Some details remain unclear due to handwriting complexity and partial obfuscation, but the overall structure pertains to event or content room management with associated logistical notes."
