@@ -1,0 +1,46 @@
+research_task:
+  description: >
+    Research {topic} and produce a briefing-ready dossier.
+    You must use the available research tools and explicitly report whether the intermittent probe succeeded or timed out.
+    Include key findings, source-backed claims, known uncertainties, and practical implications.
+  expected_output: >
+    A markdown dossier with these sections:
+    1. Executive Summary
+    2. Key Findings
+    3. Source-Backed Evidence
+    4. Public Discourse / Social Signal Notes
+    5. Probe Status
+    6. Uncertainties and Gaps
+  agent: researcher
+
+fact_check_task:
+  description: >
+    Review the research dossier for factual reliability and workflow safety.
+    Validate claims, identify unsupported or weakly supported assertions, and decide whether the workflow should continue.
+  expected_output: >
+    Return valid JSON only with the following keys:
+    verdict, route, confidence, validated_claims, issues, missing_evidence, corrections_required, summary.
+    verdict must be one of approved, needs_revision, rejected.
+    route must be one of write, retry, halt.
+    confidence must be a float between 0 and 1.
+  agent: fact_checker
+  context:
+    - research_task
+  output_pydantic: fact_check_decision
+
+writing_task:
+  description: >
+    Write a final executive briefing using only material that survived fact-checking.
+    If the fact-check report called out uncertainty, preserve those caveats instead of smoothing them away.
+  expected_output: >
+    A concise markdown briefing with:
+    - title
+    - three to five evidence-based takeaways
+    - risks / caveats
+    - a final recommendation
+  agent: writer
+  context:
+    - research_task
+    - fact_check_task
+  markdown: true
+
