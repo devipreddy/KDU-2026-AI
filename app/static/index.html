@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Orchestrator Lab</title>
+    <link rel="stylesheet" href="/static/css/app.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Advanced Agent Patterns</p>
+          <h1>Real-Time Multi-Agent Voice Orchestration</h1>
+          <p class="lede">
+            Whisper-style transcription, explicit agent handoffs, parallel billing workers,
+            interruption-safe playback, and replayable JSON traces in one FastAPI demo.
+          </p>
+        </div>
+        <div class="status-grid">
+          <article>
+            <span>Phase</span>
+            <strong id="phase">disconnected</strong>
+          </article>
+          <article>
+            <span>Session</span>
+            <strong id="sessionId">-</strong>
+          </article>
+          <article>
+            <span>Trace</span>
+            <strong id="traceId">-</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="controls card">
+        <label>
+          <span>User Id</span>
+          <input id="userId" value="demo-user" />
+        </label>
+        <div class="button-row">
+          <button id="connectBtn">Connect</button>
+          <button id="disconnectBtn" disabled>Disconnect</button>
+          <button id="interruptBtn" disabled>Interrupt</button>
+        </div>
+        <p class="hint">
+          Try: "Why was I charged again this month?" while the billing reply is still playing.
+        </p>
+      </section>
+
+      <section class="grid">
+        <article class="card panel transcript-panel">
+          <div class="panel-head">
+            <h2>Transcript</h2>
+            <span id="transcriptStatus">idle</span>
+          </div>
+          <div id="transcriptLog" class="log big"></div>
+        </article>
+
+        <article class="card panel">
+          <div class="panel-head">
+            <h2>Agent Events</h2>
+            <span>triage / db / vector / consensus / billing</span>
+          </div>
+          <div id="agentLog" class="log"></div>
+        </article>
+      </section>
+
+      <section class="grid bottom-grid">
+        <article class="card panel">
+          <div class="panel-head">
+            <h2>Playback</h2>
+            <span id="playbackStatus">stopped</span>
+          </div>
+          <div id="playbackLog" class="log"></div>
+        </article>
+        <article class="card panel">
+          <div class="panel-head">
+            <h2>Wire Events</h2>
+            <span>replay-safe</span>
+          </div>
+          <div id="wireLog" class="log"></div>
+        </article>
+      </section>
+    </main>
+
+    <script type="module" src="/static/js/app.js"></script>
+  </body>
+</html>
