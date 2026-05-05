@@ -1,0 +1,6 @@
+{
+  "version": "1.0",
+  "name": "travel-booking-confirmation",
+  "template": "{\n  \"type\": \"Card\",\n  \"size\": \"lg\",\n  \"padding\": \"lg\",\n  \"children\": [\n    {\n      \"type\": \"Badge\",\n      \"label\": \"Reservation Hold Started\",\n      \"color\": \"success\",\n      \"variant\": \"soft\"\n    },\n    {\n      \"type\": \"Title\",\n      \"value\": \"{{ title }}\",\n      \"size\": \"2xl\"\n    },\n    {\n      \"type\": \"Caption\",\n      \"value\": \"{{ destination }} | {{ airline }} | {{ hotel }}\",\n      \"color\": \"secondary\"\n    },\n    {\n      \"type\": \"Text\",\n      \"value\": \"Price locked: {{ price_display }}\",\n      \"weight\": \"bold\",\n      \"size\": \"lg\"\n    },\n    {\n      \"type\": \"Caption\",\n      \"value\": \"This response was driven by a server-validated hidden action event, not a visible user message.\",\n      \"color\": \"secondary\"\n    }\n  ]\n}"
+}
+
