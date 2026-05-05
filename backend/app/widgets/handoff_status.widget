@@ -1,0 +1,5 @@
+{
+  "version": "1.0",
+  "name": "travel-handoff-status",
+  "template": "{\n  \"type\": \"Card\",\n  \"size\": \"lg\",\n  \"padding\": \"lg\",\n  \"children\": [\n    {\n      \"type\": \"Badge\",\n      \"label\": \"{{ state }}\",\n      \"color\": \"warning\",\n      \"variant\": \"soft\"\n    },\n    {\n      \"type\": \"Title\",\n      \"value\": \"{{ headline }}\",\n      \"size\": \"xl\"\n    },\n    {\n      \"type\": \"Text\",\n      \"value\": \"{{ body }}\"\n    }{% if agent_name %},\n    {\n      \"type\": \"Caption\",\n      \"value\": \"Assigned specialist: {{ agent_name }}\",\n      \"color\": \"secondary\"\n    }{% endif %}\n  ]\n}"
+}

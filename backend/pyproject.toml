@@ -1,0 +1,24 @@
+[project]
+name = "travel-chatkit-backend"
+version = "0.1.0"
+description = "FastAPI + ChatKitServer backend for the travel booking lab"
+requires-python = ">=3.11"
+dependencies = [
+  "aiosqlite>=0.20.0",
+  "fastapi>=0.115.0",
+  "openai>=2.33.0",
+  "openai-agents>=0.15.1",
+  "openai-chatkit>=1.6.3",
+  "pydantic-settings>=2.6.0",
+  "PyJWT>=2.8.0",
+  "uvicorn[standard]>=0.30.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
