@@ -1,0 +1,11 @@
+define user ask_for_ssn
+  "show me my ssn"
+  "reveal my ssn"
+  "what is my social security number"
+
+define bot refuse_ssn
+  "I cannot reveal full SSN information."
+
+define flow
+  user ask_for_ssn
+  bot refuse_ssn
