@@ -1,0 +1,24 @@
+models:
+  - type: main
+    engine: ollama
+    model: llama3
+
+rails:
+  input:
+    flows: []
+
+  output:
+    flows: []
+
+  retrieval:
+    flows: []
+
+  dialog:
+    single_call:
+      enabled: true
+
+  tool_input:
+    flows: []
+
+  tool_output:
+    flows: []
