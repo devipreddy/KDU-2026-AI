@@ -1,0 +1,53 @@
+prompt,output,valid
+Backup all email communications for legal compliance,"TASK ""backup_all_email_communications_legal_compliance""
+ACTION ""backup""
+TARGET ""email_communications""
+PARAM ""compliance_standard""=""legal""
+END",False
+Deploy latest application update to production servers,"TASK ""deploy_latest_app_update_production_servers""
+ACTION ""deploy""
+TARGET ""application""
+PARAM ""version""=""latest""
+PARAM ""environment""=""production""
+PARAM ""target_servers""=""production_servers""
+END",False
+Audit cloud access logs for suspicious activity,"TASK ""audit_cloud_access_logs_suspicious_activity""
+ACTION ""audit""
+TARGET ""cloud_access_logs""
+PARAM ""activity_type""=""suspicious""
+END",False
+Archive completed projects older than 1 year,"TASK ""archive_completed_projects_older_than_1_year""
+ACTION ""archive""
+TARGET ""completed_projects""
+PARAM ""age""=""1_year""
+END",False
+Enable two-factor authentication for all employees,"TASK ""enable_two_factor_authentication_all_employees""
+ACTION ""enable""
+TARGET ""two_factor_authentication""
+PARAM ""scope""=""all_employees""
+END",False
+Rotate API encryption keys every month,"TASK ""rotate_api_encryption_keys_monthly""
+ACTION ""rotate""
+TARGET ""api_encryption_keys""
+PARAM ""frequency""=""monthly""
+END",False
+Generate weekly compliance reports,"TASK ""generate_weekly_compliance_reports""
+ACTION ""generate_reports""
+TARGET ""compliance_data""
+PARAM ""frequency""=""weekly""
+END",False
+Validate healthcare patient data integrity,"TASK ""validate_healthcare_patient_data_integrity""
+ACTION ""validate""
+TARGET ""patient_data""
+PARAM ""integrity_check""=""true""
+END",False
+Monitor Kubernetes clusters for memory exhaustion,"TASK ""monitor_kubernetes_clusters_memory_exhaustion""
+ACTION ""monitor""
+TARGET ""kubernetes_clusters""
+PARAM ""alert_threshold""=""memory_exhaustion""
+END",False
+Notify security operations team on ransomware detection,"TASK ""notify_security_operations_team_ransomware_detection""
+ACTION ""notify""
+TARGET ""security_operations_team""
+PARAM ""detection_type""=""ransomware""
+END",False
