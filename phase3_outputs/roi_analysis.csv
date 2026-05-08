@@ -1,0 +1,7 @@
+Metric,Value
+Few-shot Total Cost,21325.0
+Fine-Tuned Total Cost,63.75
+Training Cost,3.04
+Absolute Savings,21261.25
+Cost Reduction %,99.7
+Break-even Requests,143.0

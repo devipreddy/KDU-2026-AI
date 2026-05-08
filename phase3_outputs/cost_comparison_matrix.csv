@@ -1,0 +1,3 @@
+Approach,Model,Input Tokens,Output Tokens,Cost Per Request,1M Requests Cost
+Few-shot Prompting,GPT-4o,4025,80,0.021325,21325.0
+Fine-Tuned Pipeline,GPT-4o-mini,105,80,6.4e-05,63.75

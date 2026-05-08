@@ -1,0 +1,10 @@
+{
+  "dataset_version": "v2.0.0",
+  "created_at": "2026-05-08 16:34:15.302253",
+  "total_examples": 570,
+  "training_examples": 470,
+  "validation_examples": 100,
+  "model_used": "gpt-4o",
+  "seed": 42,
+  "dataset_hash": "b9cec0f5f774e33a232ec651675ae756"
+}
