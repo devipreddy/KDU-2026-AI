@@ -20,6 +20,10 @@ class UploadValidationError(ValueError):
     """Raised when an uploaded document does not meet local validation rules."""
 
 
+class StorageReadError(ValueError):
+    """Raised when a locally encrypted storage object cannot be read."""
+
+
 @dataclass(frozen=True)
 class StoredDocument:
     storage_uri: str
@@ -96,6 +100,40 @@ def encrypt_for_local_storage(content: bytes, *, document_id: uuid.UUID) -> byte
     }
     header_bytes = json.dumps(header, sort_keys=True, separators=(",", ":")).encode()
     return len(header_bytes).to_bytes(4, "big") + header_bytes + encrypted
+
+
+def decrypt_from_local_storage(encrypted_content: bytes, *, document_id: uuid.UUID) -> bytes:
+    if len(encrypted_content) < 4:
+        raise StorageReadError("Encrypted storage object is malformed")
+
+    header_length = int.from_bytes(encrypted_content[:4], "big")
+    header_start = 4
+    header_end = header_start + header_length
+    if header_length <= 0 or len(encrypted_content) < header_end:
+        raise StorageReadError("Encrypted storage object header is malformed")
+
+    try:
+        header = json.loads(encrypted_content[header_start:header_end])
+    except json.JSONDecodeError as exc:
+        raise StorageReadError("Encrypted storage object header is invalid") from exc
+
+    if header.get("version") != ENCRYPTION_VERSION:
+        raise StorageReadError("Unsupported local encryption version")
+    if header.get("document_id") != str(document_id):
+        raise StorageReadError("Encrypted storage object document ID does not match")
+
+    encrypted_payload = encrypted_content[header_end:]
+    key = hashlib.sha256(settings.document_storage_key.encode()).digest()
+    stream = _keystream(key, document_id.bytes, len(encrypted_payload))
+    return bytes(value ^ stream[index] for index, value in enumerate(encrypted_payload))
+
+
+def read_encrypted_document(*, storage_path: Path, document_id: uuid.UUID) -> bytes:
+    try:
+        encrypted_content = storage_path.read_bytes()
+    except OSError as exc:
+        raise StorageReadError("Encrypted storage object could not be read") from exc
+    return decrypt_from_local_storage(encrypted_content, document_id=document_id)
 
 
 def store_encrypted_document(
