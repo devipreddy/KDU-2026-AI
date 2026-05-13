@@ -4,8 +4,7 @@ from pydantic import AnyHttpUrl, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_DATABASE_URL = (
-    "postgresql+psycopg://healthcare_app:healthcare_app_password"
-    "@localhost:5432/healthcare_search"
+    "postgresql+psycopg://healthcare_app:healthcare_app_password@localhost:5432/healthcare_search"
 )
 
 
@@ -20,7 +19,17 @@ class Settings(BaseSettings):
     project_name: str = Field(default="Healthcare Semantic Search API", alias="PROJECT_NAME")
     backend_cors_origins: str = Field(default="http://localhost:5173", alias="BACKEND_CORS_ORIGINS")
     database_url: str = Field(default=DEFAULT_DATABASE_URL, alias="DATABASE_URL")
-    opensearch_host: AnyHttpUrl | None = Field(default=None, alias="OPENSEARCH_HOST")
+    jwt_secret_key: str = Field(
+        default="local-development-jwt-secret-change-me",
+        alias="JWT_SECRET_KEY",
+    )
+    jwt_access_token_expire_minutes: int = Field(
+        default=60,
+        alias="JWT_ACCESS_TOKEN_EXPIRE_MINUTES",
+    )
+    jwt_issuer: str = Field(default="healthcare-semantic-search-api", alias="JWT_ISSUER")
+    chroma_host: AnyHttpUrl | None = Field(default=None, alias="CHROMA_HOST")
+    chroma_collection: str = Field(default="medical_record_chunks", alias="CHROMA_COLLECTION")
     langsmith_tracing: bool = Field(default=False, alias="LANGSMITH_TRACING")
     langsmith_api_key: str | None = Field(default=None, alias="LANGSMITH_API_KEY")
     encryption_key_id: str = Field(default="local-development-key", alias="ENCRYPTION_KEY_ID")
