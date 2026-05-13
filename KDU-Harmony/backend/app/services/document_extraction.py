@@ -17,6 +17,7 @@ from app.models.document import Document
 from app.models.enums import DocumentStatus, DocumentType, IngestionJobStatus
 from app.models.ingestion_job import IngestionJob
 from app.services.document_storage import StorageReadError, read_encrypted_document
+from app.services.phi_tokenization import tokenize_phi_for_document
 from app.services.text_normalization import normalize_medical_text
 
 
@@ -139,8 +140,13 @@ def process_ingestion_job(db: Session, job_id: uuid.UUID) -> ExtractionResult:
 
         result = extract_document_text(document, content)
         normalization = normalize_medical_text(result.text)
-        normalized_result = ExtractionResult(
+        phi_tokenization = tokenize_phi_for_document(
+            db,
+            document=document,
             text=normalization.text,
+        )
+        normalized_result = ExtractionResult(
+            text=phi_tokenization.text,
             extractor=result.extractor,
             page_count=result.page_count,
             non_empty_page_count=result.non_empty_page_count,
@@ -157,10 +163,12 @@ def process_ingestion_job(db: Session, job_id: uuid.UUID) -> ExtractionResult:
                 "text_uri": f"local-processed://{processed_path.name}",
                 "char_count": normalized_result.char_count,
                 "raw_char_count": result.char_count,
+                "normalized_char_count": len(normalization.text),
                 "page_count": normalized_result.page_count,
                 "non_empty_page_count": normalized_result.non_empty_page_count,
                 "checksum_verified": True,
                 "normalization": asdict(normalization.stats),
+                "phi": phi_tokenization.metadata_summary(),
             },
         }
         document.status = DocumentStatus.PROCESSED

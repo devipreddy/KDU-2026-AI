@@ -22,6 +22,7 @@ from app.models.enums import DocumentStatus, DocumentType, IngestionJobStatus
 from app.models.ingestion_job import IngestionJob
 from app.services.document_extraction import ExtractionError, write_processed_text
 from app.services.document_storage import StorageReadError, read_encrypted_document
+from app.services.phi_tokenization import tokenize_phi_for_document
 from app.services.text_normalization import normalize_medical_text
 
 
@@ -162,8 +163,13 @@ def process_ocr_ingestion_job(db: Session, job_id: uuid.UUID) -> OcrResult:
 
         result = extract_scanned_pdf_with_tesseract(content)
         normalization = normalize_medical_text(result.text)
-        normalized_result = OcrResult(
+        phi_tokenization = tokenize_phi_for_document(
+            db,
+            document=document,
             text=normalization.text,
+        )
+        normalized_result = OcrResult(
+            text=phi_tokenization.text,
             engine=result.engine,
             page_count=result.page_count,
             non_empty_page_count=result.non_empty_page_count,
@@ -182,10 +188,12 @@ def process_ocr_ingestion_job(db: Session, job_id: uuid.UUID) -> OcrResult:
             "text_uri": f"local-processed://{processed_path.name}",
             "char_count": normalized_result.char_count,
             "raw_char_count": result.char_count,
+            "normalized_char_count": len(normalization.text),
             "page_count": normalized_result.page_count,
             "non_empty_page_count": normalized_result.non_empty_page_count,
             "checksum_verified": True,
             "normalization": asdict(normalization.stats),
+            "phi": phi_tokenization.metadata_summary(),
         }
 
         document.ocr_engine = normalized_result.engine
