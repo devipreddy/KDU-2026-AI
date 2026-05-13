@@ -6,7 +6,7 @@ The first commit establishes the workspace foundation:
 
 - FastAPI backend scaffold
 - Vite React frontend scaffold
-- Docker Compose for backend, frontend, PostgreSQL, and OpenSearch
+- Docker Compose for backend, frontend, PostgreSQL, and ChromaDB
 - Shared environment templates
 - Linting and formatting configuration
 - Health endpoints for local smoke tests
@@ -20,7 +20,7 @@ The system will be built feature by feature around these subsystems:
 3. PHI detection and tokenization
 4. Medical metadata enrichment
 5. Hierarchical chunking
-6. Hybrid retrieval with OpenSearch
+6. Hybrid retrieval with ChromaDB and keyword indexes
 7. Cross-encoder reranking
 8. Role-aware rendering
 9. Immutable audit logging
@@ -67,7 +67,7 @@ Useful URLs:
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - Backend health: http://localhost:8000/health
-- OpenSearch: http://localhost:9200
+- ChromaDB: http://localhost:8001
 
 ## Run Backend Locally
 
@@ -85,6 +85,28 @@ Backend checks:
 ruff check .
 ruff format --check .
 pytest
+```
+
+Database migrations:
+
+```powershell
+cd backend
+alembic upgrade head
+```
+
+## Synthetic Dataset
+
+The repository includes a deterministic synthetic dataset for ingestion and retrieval benchmarks:
+
+- `data/synthetic/records.jsonl`: 1000 fabricated healthcare records
+- `data/synthetic/ground_truth_queries.json`: query labels and expected record IDs
+- `data/synthetic/manifest.json`: dataset counts and generation metadata
+
+Regenerate it with:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.synthetic.generate_dataset
 ```
 
 ## Run Frontend Locally
@@ -105,4 +127,23 @@ npm run typecheck
 
 ## Security Posture For Local Development
 
-This scaffold intentionally uses development defaults only. Real PHI should never be used in this project. Future commits will add synthetic data generation, role-aware access, PHI tokenization, encryption hooks, audit logs, and retrieval-time authorization.
+This scaffold intentionally uses development defaults only. Real PHI should never be used in this project. Future commits will add synthetic data generation, PaddleOCR-based extraction, role-aware access, PHI tokenization, encryption hooks, audit logs, and retrieval-time authorization.
+
+Seeded local auth users use the shared demo password `ChangeMe123!` and are intended only for local development.
+
+Uploaded documents are written to local encrypted storage under `data/storage` by default. The
+local encryption mode is a development simulation and should not be used for real PHI.
+
+Typed PDF and plain text extraction writes normalized extracted text under `data/processed`.
+Scanned PDF OCR initially uses Tesseract and routes low-confidence documents to review.
+Both typed extraction and OCR pass through medical text normalization before processed text is stored.
+Direct identifiers found during extraction are tokenized before processed text is written, with encrypted
+lookup mappings stored in the database for future role-aware rendering.
+Authorized doctors and records staff can resolve tokens through an audited PHI lookup endpoint; researchers,
+administrators, and limited-access users remain blocked from decrypting direct identifiers.
+Ingestion also extracts clinical metadata such as diagnoses, medications, symptoms, ICD codes,
+physicians, hospitals, dates, and section offsets for later metadata-aware retrieval.
+Processed records are chunked hierarchically: section-sized parent chunks preserve clinical context,
+while smaller child chunks support precise retrieval and later ChromaDB embedding.
+The ChromaDB collection schema now defines dense-vector storage, BM25 lexical fields, patient/document
+metadata filters, and scalar Chroma metadata used by the upcoming hybrid retrieval path.

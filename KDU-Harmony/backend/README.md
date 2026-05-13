@@ -66,6 +66,35 @@ Extracted text is normalized before storage: whitespace is collapsed, headings a
 paragraphs are restored, OCR artifacts are removed, and common medical OCR misspellings are corrected.
 Names, DOBs, MRNs, phone numbers, addresses, and emails are then replaced with stable PHI tokens
 before processed text is written. The encrypted token-to-value mappings are stored in `phi_mappings`.
+The same ingestion pass extracts clinical metadata for diagnoses, medications, symptoms, ICD codes,
+physicians, hospitals, dates, and document section offsets. High-confidence fields backfill document
+metadata columns when the upload did not provide them.
+It then creates hierarchical chunks in `document_chunks`: parent chunks map to clinical sections and
+child chunks split those sections into smaller overlapping retrieval units.
+
+## ChromaDB Index Mapping
+
+Bootstrap or inspect the ChromaDB hybrid retrieval collection:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.chroma_index --print-mapping
+.\.venv\Scripts\python.exe -m app.services.chroma_index
+```
+
+The mapping defines the dense vector field, BM25 lexical fields, scalar metadata filters, and
+patient/document identifiers used by retrieval-time authorization.
+
+## Embedding Generation
+
+Generate embeddings for unindexed chunks and upsert them into ChromaDB:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.embedding_pipeline --limit 100
+```
+
+The first embedding worker uses `BAAI/bge-base-en-v1.5` through sentence-transformers. It stores
+the Chroma embedding ID and collection on each `document_chunks` row and includes embedding model
+metadata in the Chroma payload.
 
 ## PHI Lookup
 

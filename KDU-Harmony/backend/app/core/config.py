@@ -49,6 +49,15 @@ class Settings(BaseSettings):
     tesseract_cmd: str | None = Field(default=None, alias="TESSERACT_CMD")
     chroma_host: AnyHttpUrl | None = Field(default=None, alias="CHROMA_HOST")
     chroma_collection: str = Field(default="medical_record_chunks", alias="CHROMA_COLLECTION")
+    chroma_persist_path: Path = Field(
+        default=Path("../data/chroma"),
+        alias="CHROMA_PERSIST_PATH",
+    )
+    embedding_model_name: str = Field(
+        default="BAAI/bge-base-en-v1.5",
+        alias="EMBEDDING_MODEL_NAME",
+    )
+    embedding_batch_size: int = Field(default=32, alias="EMBEDDING_BATCH_SIZE")
     langsmith_tracing: bool = Field(default=False, alias="LANGSMITH_TRACING")
     langsmith_api_key: str | None = Field(default=None, alias="LANGSMITH_API_KEY")
     encryption_key_id: str = Field(default="local-development-key", alias="ENCRYPTION_KEY_ID")
