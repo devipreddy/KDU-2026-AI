@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import AnyHttpUrl, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -28,6 +29,14 @@ class Settings(BaseSettings):
         alias="JWT_ACCESS_TOKEN_EXPIRE_MINUTES",
     )
     jwt_issuer: str = Field(default="healthcare-semantic-search-api", alias="JWT_ISSUER")
+    document_storage_root: Path = Field(
+        default=Path("../data/storage"), alias="DOCUMENT_STORAGE_ROOT"
+    )
+    document_storage_key: str = Field(
+        default="local-development-document-storage-key",
+        alias="DOCUMENT_STORAGE_KEY",
+    )
+    max_upload_bytes: int = Field(default=10 * 1024 * 1024, alias="MAX_UPLOAD_BYTES")
     chroma_host: AnyHttpUrl | None = Field(default=None, alias="CHROMA_HOST")
     chroma_collection: str = Field(default="medical_record_chunks", alias="CHROMA_COLLECTION")
     langsmith_tracing: bool = Field(default=False, alias="LANGSMITH_TRACING")
