@@ -39,6 +39,7 @@ rerank-search = "app.services.cross_encoder_reranking:main"
 context-search = "app.services.context_expansion:main"
 render-search = "app.services.result_rendering:main"
 timeline-search = "app.services.timeline_reconstruction:main"
+retrieval-quality-benchmark = "app.services.retrieval_quality_benchmarks:main"
 
 [project.optional-dependencies]
 dev = [

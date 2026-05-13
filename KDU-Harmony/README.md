@@ -2,10 +2,13 @@
 
 Customer-replica learning project for a HIPAA-aware semantic search platform over synthetic medical records.
 
-The first commit establishes the workspace foundation:
+For the full local setup, architecture notes, and demo workflow, see
+[docs/setup-demo.md](docs/setup-demo.md).
 
-- FastAPI backend scaffold
-- Vite React frontend scaffold
+The workspace includes:
+
+- FastAPI backend service
+- Vite React frontend app
 - Docker Compose for backend, frontend, PostgreSQL, and ChromaDB
 - Shared environment templates
 - Linting and formatting configuration
@@ -26,7 +29,9 @@ The system will be built feature by feature around these subsystems:
 9. Immutable audit logging
 10. Retrieval and OCR benchmarks
 
-This repository currently contains only the scaffold needed for those future slices.
+The current implementation includes feature slices for ingestion, tokenization, chunking, ChromaDB
+indexing, hybrid retrieval, role-aware rendering, audit logging, observability, timelines, and
+benchmarks.
 
 ## Repository Layout
 
@@ -55,6 +60,8 @@ Copy-Item .env.example .env
 Copy-Item backend/.env.example backend/.env
 Copy-Item frontend/.env.example frontend/.env
 ```
+
+Then follow the guided workflow in [docs/setup-demo.md](docs/setup-demo.md).
 
 ## Run With Docker Compose
 
@@ -127,7 +134,10 @@ npm run typecheck
 
 ## Security Posture For Local Development
 
-This scaffold intentionally uses development defaults only. Real PHI should never be used in this project. Future commits will add synthetic data generation, PaddleOCR-based extraction, role-aware access, PHI tokenization, encryption hooks, audit logs, and retrieval-time authorization.
+This local project intentionally uses development defaults only. Real PHI should never be used in
+this project. The implemented feature slices use synthetic data generation, role-aware access, PHI
+tokenization, local encryption hooks, audit logs, retrieval-time authorization, and an OCR fallback
+worker while the architecture remains aligned to the PaddleOCR target path.
 
 Seeded local auth users use the shared demo password `ChangeMe123!` and are intended only for local development.
 
@@ -138,7 +148,7 @@ Typed PDF and plain text extraction writes normalized extracted text under `data
 Scanned PDF OCR initially uses Tesseract and routes low-confidence documents to review.
 Both typed extraction and OCR pass through medical text normalization before processed text is stored.
 Direct identifiers found during extraction are tokenized before processed text is written, with encrypted
-lookup mappings stored in the database for future role-aware rendering.
+lookup mappings stored in the database for role-aware rendering.
 Authorized doctors and records staff can resolve tokens through an audited PHI lookup endpoint; researchers,
 administrators, and limited-access users remain blocked from decrypting direct identifiers.
 Ingestion also extracts clinical metadata such as diagnoses, medications, symptoms, ICD codes,
@@ -170,6 +180,8 @@ Patient timeline reconstruction now groups retrieved results by patient, visit d
 diagnosis, and document type while preserving citations and confidence signals.
 Observability now emits PHI-redacted structured JSON logs and includes optional OpenTelemetry and
 LangSmith tracing hooks.
+Retrieval quality benchmarks now measure top-3 accuracy, wrong-patient retrieval rate, latency,
+OCR success rate, and masking correctness against the synthetic ground-truth suite.
 Retrieval audit logging now records rendered searches and per-document access with query filters,
 document/chunk IDs, masking mode, timestamp, roles, and access decision.
 The frontend now includes a role-aware natural-language search workspace with filters, snippets,

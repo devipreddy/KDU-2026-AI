@@ -2,7 +2,10 @@
 
 FastAPI service for the healthcare semantic search platform.
 
-This scaffold exposes:
+For a complete setup guide, architecture walkthrough, and demo script, see
+[`../docs/setup-demo.md`](../docs/setup-demo.md).
+
+The service exposes:
 
 - `GET /health`
 - `GET /api/v1/health`
@@ -16,7 +19,8 @@ Run migrations from this directory:
 alembic upgrade head
 ```
 
-Feature commits will add authentication, ingestion, PaddleOCR extraction, PHI handling, ChromaDB retrieval, audit logging, and benchmarks.
+The backend now includes authentication, ingestion, OCR fallback, PHI handling, ChromaDB retrieval,
+audit logging, observability, timelines, and benchmarks.
 
 ## Authentication
 
@@ -230,6 +234,18 @@ python -m pip install -e ".[observability]"
 
 LangSmith trace payloads are prepared through the same PHI redaction layer before being attached
 to tracing context.
+
+## Retrieval Quality Benchmarks
+
+Run the synthetic retrieval benchmark suite:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.retrieval_quality_benchmarks
+```
+
+The suite reports top-3 accuracy, wrong-patient retrieval rate, average/p50/p95 latency, OCR success
+rate, and role-aware masking correctness. It defaults to the synthetic ground-truth labels under
+`../data/synthetic` and includes threshold checks for the project success criteria.
 
 ## Retrieval Audit Logging
 
