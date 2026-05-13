@@ -16,6 +16,11 @@ from app.db.session import SessionLocal
 from app.models.document import Document
 from app.models.enums import DocumentStatus, DocumentType, IngestionJobStatus
 from app.models.ingestion_job import IngestionJob
+from app.services.clinical_metadata import (
+    apply_clinical_metadata_to_document,
+    extract_clinical_metadata,
+)
+from app.services.document_chunking import chunk_document_text
 from app.services.document_storage import StorageReadError, read_encrypted_document
 from app.services.phi_tokenization import tokenize_phi_for_document
 from app.services.text_normalization import normalize_medical_text
@@ -145,6 +150,14 @@ def process_ingestion_job(db: Session, job_id: uuid.UUID) -> ExtractionResult:
             document=document,
             text=normalization.text,
         )
+        clinical_metadata = extract_clinical_metadata(phi_tokenization.text)
+        apply_clinical_metadata_to_document(document, clinical_metadata)
+        chunking = chunk_document_text(
+            db,
+            document=document,
+            text=phi_tokenization.text,
+            clinical_metadata=clinical_metadata,
+        )
         normalized_result = ExtractionResult(
             text=phi_tokenization.text,
             extractor=result.extractor,
@@ -169,6 +182,8 @@ def process_ingestion_job(db: Session, job_id: uuid.UUID) -> ExtractionResult:
                 "checksum_verified": True,
                 "normalization": asdict(normalization.stats),
                 "phi": phi_tokenization.metadata_summary(),
+                "clinical": clinical_metadata.to_metadata(),
+                "chunking": chunking.to_metadata(),
             },
         }
         document.status = DocumentStatus.PROCESSED

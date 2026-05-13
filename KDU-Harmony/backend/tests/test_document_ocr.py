@@ -16,6 +16,7 @@ from app.db.seed import DEMO_PASSWORD, seed_auth_data
 from app.db.session import get_db
 from app.main import create_app
 from app.models.document import Document
+from app.models.document_chunk import DocumentChunk
 from app.models.ingestion_job import IngestionJob
 from app.services.document_ocr import (
     OcrError,
@@ -142,6 +143,11 @@ def test_scanned_pdf_ocr_success_updates_document_and_job(
         job = db.scalar(
             select(IngestionJob).where(IngestionJob.id == UUID(upload["ingestion_job_id"]))
         )
+        chunks = db.scalars(
+            select(DocumentChunk)
+            .where(DocumentChunk.document_id == UUID(upload["id"]))
+            .order_by(DocumentChunk.chunk_index)
+        ).all()
 
     assert document is not None
     assert document.status.value == "processed"
@@ -152,6 +158,16 @@ def test_scanned_pdf_ocr_success_updates_document_and_job(
         document.document_metadata["ocr"]["normalization"]["medical_corrections"]["Hypertension"]
         == 1
     )
+    clinical = document.document_metadata["ocr"]["clinical"]
+    assert clinical["diagnoses"] == ["Hypertension"]
+    assert clinical["medications"] == ["Beta blockers"]
+    chunking = document.document_metadata["ocr"]["chunking"]
+    assert chunking["parent_chunk_count"] == 1
+    assert chunking["child_chunk_count"] == 1
+    assert len(chunks) == 2
+    assert chunks[0].section == "Document"
+    assert chunks[1].parent_chunk_id == chunks[0].id
+    assert float(chunks[1].ocr_confidence) == 0.91
     assert job is not None
     assert job.status.value == "succeeded"
     assert job.stage == "ocr_extracted"

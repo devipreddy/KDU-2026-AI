@@ -20,6 +20,11 @@ from app.db.session import SessionLocal
 from app.models.document import Document
 from app.models.enums import DocumentStatus, DocumentType, IngestionJobStatus
 from app.models.ingestion_job import IngestionJob
+from app.services.clinical_metadata import (
+    apply_clinical_metadata_to_document,
+    extract_clinical_metadata,
+)
+from app.services.document_chunking import chunk_document_text
 from app.services.document_extraction import ExtractionError, write_processed_text
 from app.services.document_storage import StorageReadError, read_encrypted_document
 from app.services.phi_tokenization import tokenize_phi_for_document
@@ -168,6 +173,15 @@ def process_ocr_ingestion_job(db: Session, job_id: uuid.UUID) -> OcrResult:
             document=document,
             text=normalization.text,
         )
+        clinical_metadata = extract_clinical_metadata(phi_tokenization.text)
+        apply_clinical_metadata_to_document(document, clinical_metadata)
+        chunking = chunk_document_text(
+            db,
+            document=document,
+            text=phi_tokenization.text,
+            clinical_metadata=clinical_metadata,
+            ocr_confidence=result.confidence,
+        )
         normalized_result = OcrResult(
             text=phi_tokenization.text,
             engine=result.engine,
@@ -194,6 +208,8 @@ def process_ocr_ingestion_job(db: Session, job_id: uuid.UUID) -> OcrResult:
             "checksum_verified": True,
             "normalization": asdict(normalization.stats),
             "phi": phi_tokenization.metadata_summary(),
+            "clinical": clinical_metadata.to_metadata(),
+            "chunking": chunking.to_metadata(),
         }
 
         document.ocr_engine = normalized_result.engine

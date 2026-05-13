@@ -16,6 +16,7 @@ from app.db.seed import DEMO_PASSWORD, seed_auth_data
 from app.db.session import get_db
 from app.main import create_app
 from app.models.document import Document
+from app.models.document_chunk import DocumentChunk
 from app.models.ingestion_job import IngestionJob
 from app.models.phi_mapping import PhiMapping
 from app.services.document_extraction import (
@@ -118,9 +119,15 @@ def test_text_upload_can_be_extracted_to_processed_text(extraction_app: Extracti
             b"MRN: MRN-100100\n"
             b"Phone: (555) 123-4567\n"
             b"Address: 12 Oak Street, Boston, MA 02118\n"
+            b"Visit Date: 2025-02-14\n"
+            b"Hospital: Harmony General Hospital\n"
+            b"Physician: Dr. Asha Raman\n"
+            b"Chief Complaint: Patient reports chest pressure.\n"
             b"assessment - Type 2 diabetes is stable.\n"
             b"Plan:: Continue Metforrnin.\n"
-            b"Diagnosis: Hvpcrtension"
+            b"Diagnosis: Hvpcrtension\n"
+            b"ICD-10: I10\n"
+            b"Medication: metoprolol 25 mg BID"
         ),
         content_type="text/plain",
     )
@@ -153,9 +160,18 @@ def test_text_upload_can_be_extracted_to_processed_text(extraction_app: Extracti
         phi_mappings = db.scalars(
             select(PhiMapping).where(PhiMapping.patient_ref == "PATIENT_REF_0100")
         ).all()
+        chunks = db.scalars(
+            select(DocumentChunk)
+            .where(DocumentChunk.document_id == UUID(upload["id"]))
+            .order_by(DocumentChunk.chunk_index)
+        ).all()
 
     assert document is not None
     assert document.status.value == "processed"
+    assert document.diagnosis == "Hypertension"
+    assert document.icd_codes == ["I10"]
+    assert document.hospital == "Harmony General Hospital"
+    assert document.physician == "Dr. Asha Raman"
     assert document.document_metadata["extraction"]["extractor"] == "plain_text"
     assert document.document_metadata["extraction"]["checksum_verified"] is True
     assert (
@@ -166,6 +182,39 @@ def test_text_upload_can_be_extracted_to_processed_text(extraction_app: Extracti
     )
     assert document.document_metadata["extraction"]["phi"]["entity_counts"]["PATIENT_NAME"] == 1
     assert document.document_metadata["extraction"]["phi"]["entity_counts"]["MRN"] == 1
+    clinical = document.document_metadata["extraction"]["clinical"]
+    assert clinical["diagnoses"] == ["Hypertension", "Type 2 diabetes mellitus"]
+    assert "metoprolol 25 mg BID" in clinical["medications"]
+    assert "metformin" in clinical["medications"]
+    assert clinical["symptoms"] == ["chest pressure"]
+    assert clinical["icd_codes"] == ["I10"]
+    assert clinical["hospitals"] == ["Harmony General Hospital"]
+    assert clinical["physicians"] == ["Dr. Asha Raman"]
+    assert clinical["dates"] == [{"label": "visit_date", "value": "2025-02-14"}]
+    assert {section["section"] for section in clinical["document_sections"]} >= {
+        "Chief Complaint",
+        "Assessment",
+        "Plan",
+        "Diagnosis",
+        "ICD-10",
+        "Medications",
+    }
+    chunking = document.document_metadata["extraction"]["chunking"]
+    assert chunking["parent_chunk_count"] == len(clinical["document_sections"])
+    assert chunking["child_chunk_count"] == len(clinical["document_sections"])
+    assert chunking["total_chunk_count"] == len(chunks)
+    assert len(chunks) == len(clinical["document_sections"]) * 2
+    parent_chunks = [chunk for chunk in chunks if chunk.parent_chunk_id is None]
+    child_chunks = [chunk for chunk in chunks if chunk.parent_chunk_id is not None]
+    assert {chunk.section for chunk in parent_chunks} >= {"Diagnosis", "Medications", "Plan"}
+    assert len(parent_chunks) == len(child_chunks)
+    assert all(chunk.embedding_collection == settings.chroma_collection for chunk in chunks)
+    assert all(chunk.sensitivity_level == document.sensitivity_level for chunk in chunks)
+    assert all(chunk.retrieval_metadata["patient_ref"] == "PATIENT_REF_0100" for chunk in chunks)
+    assert all(chunk.retrieval_metadata["chunker"] for chunk in chunks)
+    assert all(
+        chunk.parent_chunk_id in {parent.id for parent in parent_chunks} for chunk in child_chunks
+    )
     assert len(phi_mappings) == 5
     assert all("John Smith" not in mapping.encrypted_value for mapping in phi_mappings)
     assert job is not None
