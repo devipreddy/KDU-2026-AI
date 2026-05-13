@@ -33,6 +33,7 @@ from app.services.phi_store import (
 )
 from app.services.phi_tokenization import decrypt_phi_value
 from app.services.query_understanding import QueryUnderstandingResult, understand_query
+from app.services.retrieval_audit import record_rendered_retrieval_audit
 from app.services.retrieval_authorization import AuthorizedMetadataFilter
 
 PHI_RENDERER_VERSION = "phi_aware_result_renderer_v1"
@@ -194,6 +195,9 @@ def phi_aware_search(
     collection: Any | None = None,
     collection_name: str | None = None,
     reranker: CrossEncoderReranker | None = None,
+    audit: bool = True,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
 ) -> PHIRenderedSearchResult:
     parsed_query = understand_query(query) if isinstance(query, str) else query
     context_result = contextual_search(
@@ -210,7 +214,14 @@ def phi_aware_search(
         collection_name=collection_name,
         reranker=reranker,
     )
-    return render_contextual_search_result(db, user=user, context_result=context_result)
+    return render_contextual_search_result(
+        db,
+        user=user,
+        context_result=context_result,
+        audit=audit,
+        ip_address=ip_address,
+        user_agent=user_agent,
+    )
 
 
 def render_contextual_search_result(
@@ -218,6 +229,9 @@ def render_contextual_search_result(
     *,
     user: User,
     context_result: ContextualSearchResult,
+    audit: bool = True,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
 ) -> PHIRenderedSearchResult:
     policy = rendering_policy_for_user(
         db,
@@ -239,13 +253,22 @@ def render_contextual_search_result(
         )
         for hit in context_result.hits
     ]
-    return PHIRenderedSearchResult(
+    rendered_result = PHIRenderedSearchResult(
         query=context_result.query,
         authorization=context_result.authorization,
         rendering_policy=policy,
         hits=rendered_hits,
         context_result=context_result,
     )
+    if audit:
+        record_rendered_retrieval_audit(
+            db,
+            user=user,
+            rendered_result=rendered_result,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+    return rendered_result
 
 
 def rendering_policy_for_user(

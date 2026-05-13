@@ -166,3 +166,5 @@ Parent context expansion now returns matched chunks with parent section context,
 page/section metadata, and confidence signals.
 PHI-aware rendering now decrypts authorized clinician views, de-identifies researcher results, and
 returns metadata-only administrator views.
+Retrieval audit logging now records rendered searches and per-document access with query filters,
+document/chunk IDs, masking mode, timestamp, roles, and access decision.

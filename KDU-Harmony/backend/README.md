@@ -193,6 +193,13 @@ Doctors and records staff receive decrypted direct identifiers when their polici
 researchers receive de-identified clinical text, and administrators receive metadata-only results
 without clinical snippets or parent section text.
 
+## Retrieval Audit Logging
+
+PHI-aware rendering writes append-only audit events for every rendered search. Each retrieval logs
+the user, roles, query, authorization/query filters, returned document IDs, matched chunk IDs,
+timestamp, masking mode, PHI visibility, and access decision. A separate document access audit event
+is also written for each source document returned in the result set.
+
 ## PHI Lookup
 
 Authorized users can resolve a stored token through:
