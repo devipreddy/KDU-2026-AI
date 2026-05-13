@@ -168,3 +168,5 @@ PHI-aware rendering now decrypts authorized clinician views, de-identifies resea
 returns metadata-only administrator views.
 Retrieval audit logging now records rendered searches and per-document access with query filters,
 document/chunk IDs, masking mode, timestamp, roles, and access decision.
+The frontend now includes a role-aware natural-language search workspace with filters, snippets,
+citations, confidence indicators, and metadata-only rendering.
