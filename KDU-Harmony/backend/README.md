@@ -146,6 +146,29 @@ Run semantic retrieval over embedded chunks stored in ChromaDB:
 Dense retrieval embeds the parsed query, sends ChromaDB the same authorization-aware metadata
 filters used by BM25, and hydrates returned Chroma chunk IDs back to database-backed snippets.
 
+## Hybrid Retrieval
+
+Combine BM25 and dense vector candidates with reciprocal rank fusion:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.hybrid_retrieval doctor@example.com "patients with cardiac issues treated in Q1 2025"
+```
+
+Hybrid retrieval runs both retrievers with the same parsed query and RBAC scope, then ranks the
+union of chunk candidates with RRF so records found by both methods rise above single-source hits.
+
+## Cross-Encoder Reranking
+
+Rerank the top hybrid candidates with a local cross-encoder:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.cross_encoder_reranking doctor@example.com "patients with cardiac issues treated in Q1 2025" --rerank-top-n 20
+```
+
+The reranker uses `BAAI/bge-reranker-large` by default and falls back to
+`BAAI/bge-reranker-base` if the larger model cannot be loaded. Only the top-N hybrid candidates
+are scored by the cross-encoder to keep latency bounded.
+
 ## PHI Lookup
 
 Authorized users can resolve a stored token through:

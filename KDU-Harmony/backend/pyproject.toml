@@ -34,6 +34,8 @@ understand-query = "app.services.query_understanding:main"
 authorize-query-filters = "app.services.retrieval_authorization:main"
 bm25-search = "app.services.bm25_retrieval:main"
 dense-search = "app.services.dense_retrieval:main"
+hybrid-search = "app.services.hybrid_retrieval:main"
+rerank-search = "app.services.cross_encoder_reranking:main"
 
 [project.optional-dependencies]
 dev = [

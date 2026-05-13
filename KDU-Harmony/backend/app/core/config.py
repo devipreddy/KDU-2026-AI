@@ -58,6 +58,15 @@ class Settings(BaseSettings):
         alias="EMBEDDING_MODEL_NAME",
     )
     embedding_batch_size: int = Field(default=32, alias="EMBEDDING_BATCH_SIZE")
+    reranker_model_name: str = Field(
+        default="BAAI/bge-reranker-large",
+        alias="RERANKER_MODEL_NAME",
+    )
+    reranker_fallback_model_name: str = Field(
+        default="BAAI/bge-reranker-base",
+        alias="RERANKER_FALLBACK_MODEL_NAME",
+    )
+    reranker_batch_size: int = Field(default=16, alias="RERANKER_BATCH_SIZE")
     index_on_ingestion: bool = Field(default=False, alias="INDEX_ON_INGESTION")
     langsmith_tracing: bool = Field(default=False, alias="LANGSMITH_TRACING")
     langsmith_api_key: str | None = Field(default=None, alias="LANGSMITH_API_KEY")

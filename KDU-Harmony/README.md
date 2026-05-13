@@ -159,3 +159,6 @@ BM25 lexical retrieval now scores authorized chunks for exact medication names, 
 tokens, physician names, and diagnosis terms.
 Dense vector retrieval now embeds natural-language queries and searches authorized ChromaDB chunks
 semantically before hydrating snippets from the database.
+Hybrid retrieval now combines BM25 and dense vector rankings with reciprocal rank fusion.
+Cross-encoder reranking now reorders the top hybrid candidates with a BGE reranker and smaller
+fallback model.
