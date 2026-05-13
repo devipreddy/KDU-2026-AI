@@ -31,6 +31,9 @@ process-ocr-jobs = "app.services.document_ocr:main"
 bootstrap-chroma-index = "app.services.chroma_index:main"
 index-chunk-embeddings = "app.services.embedding_pipeline:main"
 understand-query = "app.services.query_understanding:main"
+authorize-query-filters = "app.services.retrieval_authorization:main"
+bm25-search = "app.services.bm25_retrieval:main"
+dense-search = "app.services.dense_retrieval:main"
 
 [project.optional-dependencies]
 dev = [

@@ -147,3 +147,15 @@ Processed records are chunked hierarchically: section-sized parent chunks preser
 while smaller child chunks support precise retrieval and later ChromaDB embedding.
 The ChromaDB collection schema now defines dense-vector storage, BM25 lexical fields, patient/document
 metadata filters, and scalar Chroma metadata used by the upcoming hybrid retrieval path.
+Chunk embeddings are generated with `BAAI/bge-base-en-v1.5` through sentence-transformers and stored
+in ChromaDB alongside the retrieval metadata.
+Chunk indexing now has durable status tracking, retryable failure capture, and an optional
+`INDEX_ON_INGESTION=true` hook that indexes freshly extracted chunks directly into ChromaDB.
+Natural-language queries are parsed into temporal, diagnosis, patient, hospital, physician,
+document-type, and ICD-code signals before the upcoming retrieval step builds metadata filters.
+Retrieval authorization now combines those query signals with active RBAC policies so ChromaDB
+receives pre-filtered metadata constraints and unauthorized chunks stay out of candidate retrieval.
+BM25 lexical retrieval now scores authorized chunks for exact medication names, ICD codes, MRN
+tokens, physician names, and diagnosis terms.
+Dense vector retrieval now embeds natural-language queries and searches authorized ChromaDB chunks
+semantically before hydrating snippets from the database.

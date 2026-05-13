@@ -112,6 +112,40 @@ Parse natural-language retrieval queries into metadata-aware signals:
 The parser extracts temporal filters, diagnosis concepts, patient references, hospitals, physicians,
 document types, and ICD codes so the retrieval layer can build Chroma metadata filters before search.
 
+## Retrieval Authorization Filters
+
+Build Chroma metadata filters with RBAC constraints applied before retrieval:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.retrieval_authorization doctor@example.com "patients with cardiac issues treated in Q1 2025"
+```
+
+The filter builder combines parsed query signals with active document access policies, especially
+allowed sensitivity levels, so unauthorized chunks are excluded before vector or keyword retrieval.
+
+## BM25 Retrieval
+
+Run the local lexical retrieval path over authorized chunks:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.bm25_retrieval doctor@example.com "I10 records by Dr. Asha Raman"
+```
+
+BM25 retrieval scores exact keyword matches across medication names, ICD codes, authorized MRN
+tokens, physician names, and diagnosis terms after RBAC metadata filters have narrowed the candidate
+set.
+
+## Dense Vector Retrieval
+
+Run semantic retrieval over embedded chunks stored in ChromaDB:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.dense_retrieval doctor@example.com "patients with cardiac issues treated in Q1 2025"
+```
+
+Dense retrieval embeds the parsed query, sends ChromaDB the same authorization-aware metadata
+filters used by BM25, and hydrates returned Chroma chunk IDs back to database-backed snippets.
+
 ## PHI Lookup
 
 Authorized users can resolve a stored token through:
