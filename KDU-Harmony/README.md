@@ -166,7 +166,13 @@ Parent context expansion now returns matched chunks with parent section context,
 page/section metadata, and confidence signals.
 PHI-aware rendering now decrypts authorized clinician views, de-identifies researcher results, and
 returns metadata-only administrator views.
+Patient timeline reconstruction now groups retrieved results by patient, visit date, hospital,
+diagnosis, and document type while preserving citations and confidence signals.
+Observability now emits PHI-redacted structured JSON logs and includes optional OpenTelemetry and
+LangSmith tracing hooks.
 Retrieval audit logging now records rendered searches and per-document access with query filters,
 document/chunk IDs, masking mode, timestamp, roles, and access decision.
 The frontend now includes a role-aware natural-language search workspace with filters, snippets,
 citations, confidence indicators, and metadata-only rendering.
+The frontend also includes a searchable audit log table showing who accessed which records, when,
+with which query, masking mode, and access decision.

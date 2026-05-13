@@ -193,6 +193,44 @@ Doctors and records staff receive decrypted direct identifiers when their polici
 researchers receive de-identified clinical text, and administrators receive metadata-only results
 without clinical snippets or parent section text.
 
+## Patient Timeline Reconstruction
+
+Reconstruct patient timelines from contextual retrieval results:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.timeline_reconstruction doctor@example.com "patients with cardiac issues treated in Q1 2025"
+```
+
+Timeline reconstruction groups matched chunks by patient reference, visit date, hospital,
+diagnosis, and document type, then preserves source citations, chunk IDs, sections, visit IDs,
+ICD codes, first rank, and highest confidence for each grouped visit/document slice.
+
+## Observability
+
+The backend emits structured JSON logs with PHI redaction enabled by default. Request logs include
+method, path, status, duration, and a request ID, while the redaction processor removes direct
+identifiers, PHI tokens, emails, phone numbers, MRNs, SSNs, DOB strings, and sensitive structured
+fields before log records are rendered.
+
+Optional OpenTelemetry and LangSmith hooks are configured through environment variables:
+
+```powershell
+LOG_LEVEL=INFO
+OTEL_ENABLED=false
+OTEL_EXPORTER_OTLP_ENDPOINT=
+LANGSMITH_TRACING=false
+LANGSMITH_PROJECT=healthcare-semantic-search-local
+```
+
+Install optional tracing packages when exporting spans or LangSmith traces:
+
+```powershell
+python -m pip install -e ".[observability]"
+```
+
+LangSmith trace payloads are prepared through the same PHI redaction layer before being attached
+to tracing context.
+
 ## Retrieval Audit Logging
 
 PHI-aware rendering writes append-only audit events for every rendered search. Each retrieval logs

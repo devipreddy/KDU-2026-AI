@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
+from app.core.observability import langsmith_trace, observation_span
 from app.db.session import SessionLocal
 from app.models.phi_mapping import PhiMapping
 from app.models.user import User
@@ -118,6 +119,9 @@ class RenderedCitation:
     visit_id: str | None
     checksum_sha256: str
     citation_label: str
+    diagnosis: str | None
+    icd_codes: list[str]
+    visit_date: str | None
 
     def to_metadata(self) -> dict[str, Any]:
         return {
@@ -133,6 +137,9 @@ class RenderedCitation:
             "visit_id": self.visit_id,
             "checksum_sha256": self.checksum_sha256,
             "citation_label": self.citation_label,
+            "diagnosis": self.diagnosis,
+            "icd_codes": self.icd_codes,
+            "visit_date": self.visit_date,
         }
 
 
@@ -171,6 +178,9 @@ class PHIRenderedSearchResult:
     context_result: ContextualSearchResult
 
     def to_metadata(self) -> dict[str, Any]:
+        from app.services.timeline_reconstruction import reconstruct_patient_timeline
+
+        timeline = reconstruct_patient_timeline(self)
         return {
             "renderer": PHI_RENDERER_VERSION,
             "query": self.query,
@@ -178,6 +188,7 @@ class PHIRenderedSearchResult:
             "rendering_policy": self.rendering_policy.to_metadata(),
             "hit_count": len(self.hits),
             "hits": [hit.to_metadata() for hit in self.hits],
+            "timeline": [group.to_metadata() for group in timeline],
         }
 
 
@@ -200,28 +211,39 @@ def phi_aware_search(
     user_agent: str | None = None,
 ) -> PHIRenderedSearchResult:
     parsed_query = understand_query(query) if isinstance(query, str) else query
-    context_result = contextual_search(
-        db,
-        user=user,
-        query=parsed_query,
-        limit=limit,
-        candidate_limit=candidate_limit,
-        rerank_top_n=rerank_top_n,
-        rrf_k=rrf_k,
-        authorized_patient_refs=authorized_patient_refs,
-        encoder=encoder,
-        collection=collection,
-        collection_name=collection_name,
-        reranker=reranker,
-    )
-    return render_contextual_search_result(
-        db,
-        user=user,
-        context_result=context_result,
-        audit=audit,
-        ip_address=ip_address,
-        user_agent=user_agent,
-    )
+    trace_inputs = {
+        "query": parsed_query.original_query,
+        "user_id": str(user.id),
+        "limit": limit,
+        "candidate_limit": candidate_limit,
+        "rerank_top_n": rerank_top_n,
+    }
+    with (
+        observation_span("retrieval.phi_aware_search", attributes=trace_inputs),
+        langsmith_trace("retrieval.phi_aware_search", inputs=trace_inputs),
+    ):
+        context_result = contextual_search(
+            db,
+            user=user,
+            query=parsed_query,
+            limit=limit,
+            candidate_limit=candidate_limit,
+            rerank_top_n=rerank_top_n,
+            rrf_k=rrf_k,
+            authorized_patient_refs=authorized_patient_refs,
+            encoder=encoder,
+            collection=collection,
+            collection_name=collection_name,
+            reranker=reranker,
+        )
+        return render_contextual_search_result(
+            db,
+            user=user,
+            context_result=context_result,
+            audit=audit,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
 
 
 def render_contextual_search_result(
@@ -356,6 +378,7 @@ def render_hit(
     return PHIRenderedSearchHit(
         final_rank=hit.final_rank,
         patient_display_ref=patient_display_ref(
+            hit.citation.patient_ref,
             hit.citation.document_id,
             hit.matched_chunk.chunk_id,
             policy=policy,
@@ -459,6 +482,9 @@ def render_citation(
             decrypted_values=decrypted_values,
             redactions=redactions,
         ),
+        diagnosis=citation.diagnosis,
+        icd_codes=citation.icd_codes,
+        visit_date=citation.visit_date,
     )
 
 
@@ -595,17 +621,19 @@ def entity_type_for_metadata_key(key: str) -> str:
 
 
 def patient_display_ref(
+    patient_ref: str | None,
     document_id: uuid.UUID,
     chunk_id: uuid.UUID,
     *,
     policy: PHIRenderingPolicy,
 ) -> str | None:
     if policy.render_mode == "full_phi":
-        return str(document_id)
+        return patient_ref or str(document_id)
     if policy.render_mode == "metadata_only":
         return None
     prefix = "DEID" if policy.render_mode == "de_identified" else "LIMITED"
-    digest = hashlib.sha256(f"{document_id}:{chunk_id}".encode()).hexdigest()[:10].upper()
+    stable_ref = patient_ref or str(document_id)
+    digest = hashlib.sha256(f"{stable_ref}:{chunk_id}".encode()).hexdigest()[:10].upper()
     return f"{prefix}-{digest}"
 
 

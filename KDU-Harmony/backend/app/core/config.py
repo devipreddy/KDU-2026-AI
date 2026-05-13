@@ -68,8 +68,29 @@ class Settings(BaseSettings):
     )
     reranker_batch_size: int = Field(default=16, alias="RERANKER_BATCH_SIZE")
     index_on_ingestion: bool = Field(default=False, alias="INDEX_ON_INGESTION")
+    log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+    otel_enabled: bool = Field(default=False, alias="OTEL_ENABLED")
+    otel_service_name: str | None = Field(default=None, alias="OTEL_SERVICE_NAME")
+    otel_exporter_otlp_endpoint: str | None = Field(
+        default=None,
+        alias="OTEL_EXPORTER_OTLP_ENDPOINT",
+    )
+    otel_exporter_otlp_insecure: bool = Field(
+        default=True,
+        alias="OTEL_EXPORTER_OTLP_INSECURE",
+    )
+    otel_sqlalchemy_instrumentation: bool = Field(
+        default=True,
+        alias="OTEL_SQLALCHEMY_INSTRUMENTATION",
+    )
+    otel_excluded_urls: str = Field(default="/health,/api/v1/health", alias="OTEL_EXCLUDED_URLS")
     langsmith_tracing: bool = Field(default=False, alias="LANGSMITH_TRACING")
     langsmith_api_key: str | None = Field(default=None, alias="LANGSMITH_API_KEY")
+    langsmith_project: str = Field(
+        default="healthcare-semantic-search-local",
+        alias="LANGSMITH_PROJECT",
+    )
+    langsmith_endpoint: str | None = Field(default=None, alias="LANGSMITH_ENDPOINT")
     encryption_key_id: str = Field(default="local-development-key", alias="ENCRYPTION_KEY_ID")
 
     @property

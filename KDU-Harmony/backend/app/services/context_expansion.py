@@ -4,7 +4,7 @@ import argparse
 import json
 import math
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
 
@@ -69,6 +69,10 @@ class SourceCitation:
     visit_id: str | None
     checksum_sha256: str
     citation_label: str
+    patient_ref: str | None = None
+    diagnosis: str | None = None
+    icd_codes: list[str] = field(default_factory=list)
+    visit_date: str | None = None
 
     def to_metadata(self) -> dict[str, Any]:
         return {
@@ -84,6 +88,10 @@ class SourceCitation:
             "visit_id": self.visit_id,
             "checksum_sha256": self.checksum_sha256,
             "citation_label": self.citation_label,
+            "patient_ref": self.patient_ref,
+            "diagnosis": self.diagnosis,
+            "icd_codes": self.icd_codes,
+            "visit_date": self.visit_date,
         }
 
 
@@ -137,6 +145,9 @@ class ContextualSearchResult:
     rerank_result: CrossEncoderRerankResult
 
     def to_metadata(self) -> dict[str, Any]:
+        from app.services.timeline_reconstruction import reconstruct_patient_timeline
+
+        timeline = reconstruct_patient_timeline(self)
         return {
             "retriever": CONTEXT_EXPANSION_VERSION,
             "query": self.query,
@@ -144,6 +155,7 @@ class ContextualSearchResult:
             "hit_count": len(self.hits),
             "reranker_model": self.rerank_result.reranker_model,
             "hits": [hit.to_metadata() for hit in self.hits],
+            "timeline": [group.to_metadata() for group in timeline],
         }
 
 
@@ -266,6 +278,7 @@ def source_citation(
     chunk: DocumentChunk,
     parent_chunk: DocumentChunk | None,
 ) -> SourceCitation:
+    metadata = merged_retrieval_metadata(chunk=chunk, parent_chunk=parent_chunk)
     page_number = (
         chunk.page_number
         if chunk.page_number is not None
@@ -292,6 +305,10 @@ def source_citation(
             page_number=page_number,
             section=section,
         ),
+        patient_ref=str(metadata.get("patient_ref") or document.patient_ref),
+        diagnosis=document.diagnosis or string_value(metadata.get("diagnosis")),
+        icd_codes=citation_icd_codes(document=document, metadata=metadata),
+        visit_date=citation_visit_date(document=document, metadata=metadata),
     )
 
 
@@ -308,6 +325,92 @@ def citation_label(
     if section:
         parts.append(section)
     return " | ".join(parts)
+
+
+def merged_retrieval_metadata(
+    *,
+    chunk: DocumentChunk,
+    parent_chunk: DocumentChunk | None,
+) -> dict[str, Any]:
+    metadata: dict[str, Any] = {}
+    if parent_chunk is not None:
+        metadata.update(parent_chunk.retrieval_metadata or {})
+    metadata.update(chunk.retrieval_metadata or {})
+    return metadata
+
+
+def citation_icd_codes(
+    *,
+    document: Document,
+    metadata: dict[str, Any],
+) -> list[str]:
+    if document.icd_codes:
+        return [str(code) for code in document.icd_codes]
+
+    clinical_entities = metadata.get("clinical_entities") or {}
+    values = metadata.get("icd_codes")
+    if not values and isinstance(clinical_entities, dict):
+        values = clinical_entities.get("icd_codes")
+    return list_values(values)
+
+
+def citation_visit_date(
+    *,
+    document: Document,
+    metadata: dict[str, Any],
+) -> str | None:
+    for candidate in (
+        first_visit_date_from_metadata(metadata),
+        first_visit_date_from_metadata(document.document_metadata or {}),
+    ):
+        if candidate:
+            return candidate
+    return None
+
+
+def first_visit_date_from_metadata(metadata: dict[str, Any]) -> str | None:
+    if metadata.get("visit_date"):
+        return str(metadata["visit_date"])
+
+    clinical_entities = metadata.get("clinical_entities") or {}
+    if isinstance(clinical_entities, dict):
+        date_value = first_visit_date_value(clinical_entities.get("dates"))
+        if date_value:
+            return date_value
+
+    date_value = first_visit_date_value(metadata.get("dates"))
+    if date_value:
+        return date_value
+    return None
+
+
+def first_visit_date_value(dates: Any) -> str | None:
+    if not isinstance(dates, list):
+        return None
+    for date_entry in dates:
+        if not isinstance(date_entry, dict) or not date_entry.get("value"):
+            continue
+        if date_entry.get("label") in {None, "visit_date"}:
+            return str(date_entry["value"])
+    return None
+
+
+def string_value(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
+def list_values(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list | tuple | set | frozenset):
+        return [str(item) for item in value if item is not None]
+    return [str(value)]
 
 
 def retrieval_confidence(
