@@ -4,7 +4,7 @@ import argparse
 import hashlib
 import io
 import uuid
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -22,6 +22,7 @@ from app.models.enums import DocumentStatus, DocumentType, IngestionJobStatus
 from app.models.ingestion_job import IngestionJob
 from app.services.document_extraction import ExtractionError, write_processed_text
 from app.services.document_storage import StorageReadError, read_encrypted_document
+from app.services.text_normalization import normalize_medical_text
 
 
 class OcrError(ValueError):
@@ -160,24 +161,35 @@ def process_ocr_ingestion_job(db: Session, job_id: uuid.UUID) -> OcrResult:
             raise OcrError("Stored document checksum does not match metadata")
 
         result = extract_scanned_pdf_with_tesseract(content)
-        processed_path = write_processed_text(document.id, result.text)
+        normalization = normalize_medical_text(result.text)
+        normalized_result = OcrResult(
+            text=normalization.text,
+            engine=result.engine,
+            page_count=result.page_count,
+            non_empty_page_count=result.non_empty_page_count,
+            confidence=result.confidence,
+            review_required=result.review_required,
+        )
+        processed_path = write_processed_text(document.id, normalized_result.text)
         extracted_at = datetime.now(UTC)
         ocr_metadata = {
-            "engine": result.engine,
+            "engine": normalized_result.engine,
             "extracted_at": extracted_at.isoformat(),
-            "confidence": result.confidence,
+            "confidence": normalized_result.confidence,
             "review_threshold": settings.ocr_confidence_review_threshold,
-            "review_required": result.review_required,
+            "review_required": normalized_result.review_required,
             "text_path": str(processed_path),
             "text_uri": f"local-processed://{processed_path.name}",
-            "char_count": result.char_count,
-            "page_count": result.page_count,
-            "non_empty_page_count": result.non_empty_page_count,
+            "char_count": normalized_result.char_count,
+            "raw_char_count": result.char_count,
+            "page_count": normalized_result.page_count,
+            "non_empty_page_count": normalized_result.non_empty_page_count,
             "checksum_verified": True,
+            "normalization": asdict(normalization.stats),
         }
 
-        document.ocr_engine = result.engine
-        document.ocr_confidence = result.confidence
+        document.ocr_engine = normalized_result.engine
+        document.ocr_confidence = normalized_result.confidence
         document.document_metadata = {
             **document.document_metadata,
             "ocr": ocr_metadata,
@@ -197,7 +209,7 @@ def process_ocr_ingestion_job(db: Session, job_id: uuid.UUID) -> OcrResult:
             "ocr": ocr_metadata,
         }
         db.commit()
-        return result
+        return normalized_result
     except (OcrError, StorageReadError, ExtractionError) as exc:
         failed_at = datetime.now(UTC)
         document.status = DocumentStatus.FAILED

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import uuid
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -17,6 +17,7 @@ from app.models.document import Document
 from app.models.enums import DocumentStatus, DocumentType, IngestionJobStatus
 from app.models.ingestion_job import IngestionJob
 from app.services.document_storage import StorageReadError, read_encrypted_document
+from app.services.text_normalization import normalize_medical_text
 
 
 class ExtractionError(ValueError):
@@ -137,20 +138,29 @@ def process_ingestion_job(db: Session, job_id: uuid.UUID) -> ExtractionResult:
             raise ExtractionError("Stored document checksum does not match metadata")
 
         result = extract_document_text(document, content)
-        processed_path = write_processed_text(document.id, result.text)
+        normalization = normalize_medical_text(result.text)
+        normalized_result = ExtractionResult(
+            text=normalization.text,
+            extractor=result.extractor,
+            page_count=result.page_count,
+            non_empty_page_count=result.non_empty_page_count,
+        )
+        processed_path = write_processed_text(document.id, normalized_result.text)
         extracted_at = datetime.now(UTC)
 
         document.document_metadata = {
             **document.document_metadata,
             "extraction": {
-                "extractor": result.extractor,
+                "extractor": normalized_result.extractor,
                 "extracted_at": extracted_at.isoformat(),
                 "text_path": str(processed_path),
                 "text_uri": f"local-processed://{processed_path.name}",
-                "char_count": result.char_count,
-                "page_count": result.page_count,
-                "non_empty_page_count": result.non_empty_page_count,
+                "char_count": normalized_result.char_count,
+                "raw_char_count": result.char_count,
+                "page_count": normalized_result.page_count,
+                "non_empty_page_count": normalized_result.non_empty_page_count,
                 "checksum_verified": True,
+                "normalization": asdict(normalization.stats),
             },
         }
         document.status = DocumentStatus.PROCESSED
@@ -162,7 +172,7 @@ def process_ingestion_job(db: Session, job_id: uuid.UUID) -> ExtractionResult:
             "extraction": document.document_metadata["extraction"],
         }
         db.commit()
-        return result
+        return normalized_result
     except (ExtractionError, StorageReadError) as exc:
         failed_at = datetime.now(UTC)
         document.status = DocumentStatus.FAILED
