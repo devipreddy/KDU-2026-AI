@@ -36,7 +36,17 @@ class Settings(BaseSettings):
         default="local-development-document-storage-key",
         alias="DOCUMENT_STORAGE_KEY",
     )
+    processed_text_root: Path = Field(
+        default=Path("../data/processed"),
+        alias="PROCESSED_TEXT_ROOT",
+    )
     max_upload_bytes: int = Field(default=10 * 1024 * 1024, alias="MAX_UPLOAD_BYTES")
+    ocr_confidence_review_threshold: float = Field(
+        default=0.80,
+        alias="OCR_CONFIDENCE_REVIEW_THRESHOLD",
+    )
+    ocr_render_dpi: int = Field(default=200, alias="OCR_RENDER_DPI")
+    tesseract_cmd: str | None = Field(default=None, alias="TESSERACT_CMD")
     chroma_host: AnyHttpUrl | None = Field(default=None, alias="CHROMA_HOST")
     chroma_collection: str = Field(default="medical_record_chunks", alias="CHROMA_COLLECTION")
     langsmith_tracing: bool = Field(default=False, alias="LANGSMITH_TRACING")
