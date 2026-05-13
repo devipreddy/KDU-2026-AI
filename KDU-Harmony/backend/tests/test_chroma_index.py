@@ -3,7 +3,7 @@ from uuid import UUID
 
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
-from app.models.enums import DocumentStatus, DocumentType, SensitivityLevel
+from app.models.enums import ChunkIndexingStatus, DocumentStatus, DocumentType, SensitivityLevel
 from app.services.chroma_index import (
     BM25_FIELDS,
     DENSE_VECTOR_FIELD,
@@ -67,6 +67,8 @@ def build_test_chunk() -> DocumentChunk:
         section="Medications",
         content=content,
         content_sha256=hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        indexing_status=ChunkIndexingStatus.INDEXED.value,
+        indexing_attempts=1,
         token_count=7,
         start_offset=150,
         end_offset=200,
@@ -122,6 +124,8 @@ def test_build_chroma_record_flattens_metadata_and_bm25_fields() -> None:
     assert record.metadata["document_id"] == "40000000-0000-4000-8000-000000000001"
     assert record.metadata["parent_chunk_id"] == "50000000-0000-4000-8000-000000000000"
     assert record.metadata["section"] == "Medications"
+    assert record.metadata["indexing_status"] == "indexed"
+    assert record.metadata["indexing_attempts"] == 1
     assert record.metadata["icd_codes"] == "I10"
     assert record.metadata["visit_date"] == "2025-02-14"
     assert record.metadata["bm25_medications"] == "metoprolol 25 mg BID"

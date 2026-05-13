@@ -1,12 +1,13 @@
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import JSON, ForeignKey, Integer, Numeric, String, Text, Uuid
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, Numeric, String, Text, Uuid
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.models.enums import SensitivityLevel, enum_values
+from app.models.enums import ChunkIndexingStatus, SensitivityLevel, enum_values
 from app.models.mixins import TimestampMixin
 
 if TYPE_CHECKING:
@@ -31,6 +32,15 @@ class DocumentChunk(TimestampMixin, Base):
     content_sha256: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     embedding_collection: Mapped[str | None] = mapped_column(String(120), index=True)
     embedding_id: Mapped[str | None] = mapped_column(String(160), unique=True)
+    indexing_status: Mapped[str] = mapped_column(
+        String(40),
+        default=ChunkIndexingStatus.PENDING.value,
+        nullable=False,
+        index=True,
+    )
+    indexing_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    indexing_error: Mapped[str | None] = mapped_column(Text)
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     token_count: Mapped[int | None] = mapped_column(Integer)
     start_offset: Mapped[int | None] = mapped_column(Integer)
     end_offset: Mapped[int | None] = mapped_column(Integer)

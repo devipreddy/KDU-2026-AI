@@ -6,6 +6,7 @@ import uuid
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import fitz
 from sqlalchemy import select
@@ -22,6 +23,11 @@ from app.services.clinical_metadata import (
 )
 from app.services.document_chunking import chunk_document_text
 from app.services.document_storage import StorageReadError, read_encrypted_document
+from app.services.embedding_pipeline import (
+    EmbeddingEncoder,
+    EmbeddingPipelineError,
+    index_document_chunks,
+)
 from app.services.phi_tokenization import tokenize_phi_for_document
 from app.services.text_normalization import normalize_medical_text
 
@@ -115,7 +121,14 @@ def _storage_path_for(document: Document) -> Path:
     return Path(raw_storage_path)
 
 
-def process_ingestion_job(db: Session, job_id: uuid.UUID) -> ExtractionResult:
+def process_ingestion_job(
+    db: Session,
+    job_id: uuid.UUID,
+    *,
+    index_after_extraction: bool | None = None,
+    encoder: EmbeddingEncoder | None = None,
+    collection: Any | None = None,
+) -> ExtractionResult:
     job = db.scalar(
         select(IngestionJob)
         .options(selectinload(IngestionJob.document))
@@ -195,7 +208,26 @@ def process_ingestion_job(db: Session, job_id: uuid.UUID) -> ExtractionResult:
             "extraction": document.document_metadata["extraction"],
         }
         db.commit()
+        if should_index_after_extraction(index_after_extraction):
+            indexing_result = index_document_chunks(
+                db,
+                document_id=document.id,
+                ingestion_job=job,
+                encoder=encoder,
+                collection=collection,
+            )
+
+            document.document_metadata = {
+                **(document.document_metadata or {}),
+                "extraction": {
+                    **((document.document_metadata or {}).get("extraction") or {}),
+                    "indexing": indexing_result.to_metadata(),
+                },
+            }
+            db.commit()
         return normalized_result
+    except EmbeddingPipelineError as exc:
+        raise ExtractionError(f"Chunk indexing failed: {exc}") from exc
     except (ExtractionError, StorageReadError) as exc:
         failed_at = datetime.now(UTC)
         document.status = DocumentStatus.FAILED
@@ -209,6 +241,10 @@ def process_ingestion_job(db: Session, job_id: uuid.UUID) -> ExtractionResult:
         }
         db.commit()
         raise ExtractionError(str(exc)) from exc
+
+
+def should_index_after_extraction(index_after_extraction: bool | None) -> bool:
+    return settings.index_on_ingestion if index_after_extraction is None else index_after_extraction
 
 
 def process_queued_ingestion_jobs(db: Session, *, limit: int = 25) -> list[uuid.UUID]:

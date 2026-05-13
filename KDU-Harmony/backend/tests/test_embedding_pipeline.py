@@ -10,10 +10,18 @@ from sqlalchemy.pool import StaticPool
 from app.db.base import Base
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
-from app.models.enums import DocumentStatus, DocumentType, SensitivityLevel
+from app.models.enums import (
+    ChunkIndexingStatus,
+    DocumentStatus,
+    DocumentType,
+    IngestionJobStatus,
+    SensitivityLevel,
+)
+from app.models.ingestion_job import IngestionJob
 from app.services.embedding_pipeline import (
     EmbeddingPipelineError,
     index_chunks_with_embeddings,
+    index_document_chunks,
     index_pending_chunks,
 )
 
@@ -46,6 +54,12 @@ class FakeChromaCollection:
 
     def upsert(self, **payload) -> None:
         self.payload = payload
+
+
+class FailingChromaCollection(FakeChromaCollection):
+    def upsert(self, **payload) -> None:
+        self.payload = payload
+        raise RuntimeError("ChromaDB unavailable")
 
 
 @pytest.fixture()
@@ -106,6 +120,20 @@ def seed_document_with_chunks(db: Session) -> list[DocumentChunk]:
     db.add_all([parent_chunk, child_chunk])
     db.commit()
     return [parent_chunk, child_chunk]
+
+
+def seed_indexing_job(db: Session, document_id: UUID) -> IngestionJob:
+    job = IngestionJob(
+        document_id=document_id,
+        status=IngestionJobStatus.SUCCEEDED,
+        stage="text_extracted",
+        attempts=1,
+        job_metadata={},
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+    return job
 
 
 def build_chunk(
@@ -185,7 +213,17 @@ def test_index_pending_chunks_generates_embeddings_and_stores_chroma_metadata(
     assert all(chunk.embedding_collection == collection.name for chunk in persisted_chunks)
     assert all(chunk.embedding_id for chunk in persisted_chunks)
     assert all(
+        chunk.indexing_status == ChunkIndexingStatus.INDEXED.value for chunk in persisted_chunks
+    )
+    assert all(chunk.indexing_attempts == 1 for chunk in persisted_chunks)
+    assert all(chunk.indexing_error is None for chunk in persisted_chunks)
+    assert all(chunk.indexed_at is not None for chunk in persisted_chunks)
+    assert all(
         chunk.retrieval_metadata["embedding"]["model"] == "BAAI/bge-base-en-v1.5"
+        for chunk in persisted_chunks
+    )
+    assert all(
+        chunk.retrieval_metadata["indexing"]["status"] == ChunkIndexingStatus.INDEXED.value
         for chunk in persisted_chunks
     )
 
@@ -205,6 +243,36 @@ def test_index_pending_chunks_skips_already_indexed_chunks(
     assert second_result.indexed_chunk_count == 0
 
 
+def test_index_document_chunks_updates_document_and_ingestion_job_status(
+    session_local: sessionmaker[Session],
+) -> None:
+    encoder = FakeEmbeddingEncoder()
+    collection = FakeChromaCollection()
+
+    with session_local() as db:
+        chunks = seed_document_with_chunks(db)
+        job = seed_indexing_job(db, chunks[0].document_id)
+        result = index_document_chunks(
+            db,
+            document_id=chunks[0].document_id,
+            ingestion_job=job,
+            encoder=encoder,
+            collection=collection,
+        )
+        document = db.get(Document, chunks[0].document_id)
+        persisted_job = db.get(IngestionJob, job.id)
+
+    assert result.indexed_chunk_count == 2
+    assert document is not None
+    assert document.status == DocumentStatus.INDEXED
+    assert document.document_metadata["indexing"]["status"] == ChunkIndexingStatus.INDEXED.value
+    assert document.document_metadata["indexing"]["status_counts"]["indexed"] == 2
+    assert persisted_job is not None
+    assert persisted_job.status == IngestionJobStatus.SUCCEEDED
+    assert persisted_job.stage == "indexed"
+    assert persisted_job.job_metadata["indexing"]["indexed_chunk_count"] == 2
+
+
 def test_index_chunks_rejects_inconsistent_embedding_dimensions(
     session_local: sessionmaker[Session],
 ) -> None:
@@ -221,3 +289,35 @@ def test_index_chunks_rejects_inconsistent_embedding_dimensions(
             )
 
     assert collection.payload is None
+
+
+def test_index_chunks_marks_failures_when_chromadb_upsert_fails(
+    session_local: sessionmaker[Session],
+) -> None:
+    encoder = FakeEmbeddingEncoder()
+    collection = FailingChromaCollection()
+
+    with session_local() as db:
+        chunks = seed_document_with_chunks(db)
+        with pytest.raises(EmbeddingPipelineError, match="ChromaDB unavailable"):
+            index_chunks_with_embeddings(
+                db,
+                chunks=chunks,
+                encoder=encoder,
+                collection=collection,
+            )
+        persisted_chunks = db.scalars(
+            select(DocumentChunk).order_by(DocumentChunk.chunk_index)
+        ).all()
+        document = db.get(Document, chunks[0].document_id)
+
+    assert collection.payload is not None
+    assert all(
+        chunk.indexing_status == ChunkIndexingStatus.FAILED.value for chunk in persisted_chunks
+    )
+    assert all(chunk.indexing_attempts == 1 for chunk in persisted_chunks)
+    assert all("ChromaDB unavailable" in (chunk.indexing_error or "") for chunk in persisted_chunks)
+    assert document is not None
+    assert document.status == DocumentStatus.PROCESSED
+    assert document.document_metadata["indexing"]["status"] == ChunkIndexingStatus.FAILED.value
+    assert len(document.document_metadata["indexing"]["failed_chunk_ids"]) == 2

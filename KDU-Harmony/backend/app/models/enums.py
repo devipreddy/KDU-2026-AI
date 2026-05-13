@@ -30,6 +30,7 @@ class DocumentStatus(StrEnum):
     UPLOADED = "uploaded"
     EXTRACTING = "extracting"
     PROCESSED = "processed"
+    REVIEW_REQUIRED = "review_required"
     INDEXED = "indexed"
     FAILED = "failed"
     ARCHIVED = "archived"
@@ -48,6 +49,13 @@ class IngestionJobStatus(StrEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     DEAD_LETTER = "dead_letter"
+
+
+class ChunkIndexingStatus(StrEnum):
+    PENDING = "pending"
+    INDEXING = "indexing"
+    INDEXED = "indexed"
+    FAILED = "failed"
 
 
 class AuditAction(StrEnum):

@@ -30,6 +30,7 @@ process-ingestion-jobs = "app.services.document_extraction:main"
 process-ocr-jobs = "app.services.document_ocr:main"
 bootstrap-chroma-index = "app.services.chroma_index:main"
 index-chunk-embeddings = "app.services.embedding_pipeline:main"
+understand-query = "app.services.query_understanding:main"
 
 [project.optional-dependencies]
 dev = [

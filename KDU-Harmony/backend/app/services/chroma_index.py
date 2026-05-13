@@ -42,6 +42,7 @@ METADATA_FILTER_FIELDS = (
     "sensitivity_level",
     "visit_date",
     "ocr_confidence",
+    "indexing_status",
 )
 
 PATIENT_DOCUMENT_FIELDS = (
@@ -175,6 +176,9 @@ def build_chroma_metadata(chunk: DocumentChunk) -> dict[str, str | int | float |
         "start_offset": chunk.start_offset,
         "end_offset": chunk.end_offset,
         "ocr_confidence": float(chunk.ocr_confidence) if chunk.ocr_confidence is not None else None,
+        "indexing_status": chunk.indexing_status,
+        "indexing_attempts": chunk.indexing_attempts,
+        "indexed_at": chunk.indexed_at.isoformat() if chunk.indexed_at else None,
         "embedding_model": (
             embedding_metadata.get("model") if isinstance(embedding_metadata, dict) else None
         ),

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
+from app.models.enums import ChunkIndexingStatus
 from app.services.clinical_metadata import ClinicalMetadataResult, DocumentSection
 
 CHUNKER_VERSION = "hierarchical_medical_chunker_v1"
@@ -274,6 +275,8 @@ def build_document_chunk(
         content_sha256=hashlib.sha256(content.encode("utf-8")).hexdigest(),
         embedding_collection=settings.chroma_collection,
         embedding_id=None,
+        indexing_status=ChunkIndexingStatus.PENDING.value,
+        indexing_attempts=0,
         token_count=token_count,
         start_offset=start_offset,
         end_offset=end_offset,

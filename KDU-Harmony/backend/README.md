@@ -90,11 +90,27 @@ Generate embeddings for unindexed chunks and upsert them into ChromaDB:
 
 ```powershell
 .\.venv\Scripts\python.exe -m app.services.embedding_pipeline --limit 100
+.\.venv\Scripts\python.exe -m app.services.embedding_pipeline --retry-failed
 ```
 
 The first embedding worker uses `BAAI/bge-base-en-v1.5` through sentence-transformers. It stores
 the Chroma embedding ID and collection on each `document_chunks` row and includes embedding model
 metadata in the Chroma payload.
+Each chunk also tracks `pending`, `indexing`, `indexed`, or `failed` status with attempt counts,
+timestamps, and failure messages. Set `INDEX_ON_INGESTION=true` to index freshly extracted chunks
+as part of the ingestion worker; otherwise the embedding worker can be run as an explicit retryable
+indexing step.
+
+## Query Understanding
+
+Parse natural-language retrieval queries into metadata-aware signals:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.query_understanding "patients with cardiac issues treated in Q1 2025"
+```
+
+The parser extracts temporal filters, diagnosis concepts, patient references, hospitals, physicians,
+document types, and ICD codes so the retrieval layer can build Chroma metadata filters before search.
 
 ## PHI Lookup
 

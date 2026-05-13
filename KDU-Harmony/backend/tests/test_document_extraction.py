@@ -17,6 +17,7 @@ from app.db.session import get_db
 from app.main import create_app
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
+from app.models.enums import ChunkIndexingStatus
 from app.models.ingestion_job import IngestionJob
 from app.models.phi_mapping import PhiMapping
 from app.services.document_extraction import (
@@ -32,6 +33,23 @@ class ExtractionApp:
     session_local: sessionmaker[Session]
     storage_root: Path
     processed_root: Path
+
+
+class FakeEmbeddingEncoder:
+    model_name = "BAAI/bge-base-en-v1.5"
+
+    def encode_documents(self, texts: list[str]) -> list[list[float]]:
+        return [[float(index), 0.5, 1.0] for index, _ in enumerate(texts)]
+
+
+class FakeChromaCollection:
+    name = "medical_record_chunks"
+
+    def __init__(self) -> None:
+        self.payload: dict | None = None
+
+    def upsert(self, **payload) -> None:
+        self.payload = payload
 
 
 @pytest.fixture()
@@ -220,6 +238,55 @@ def test_text_upload_can_be_extracted_to_processed_text(extraction_app: Extracti
     assert job is not None
     assert job.status.value == "succeeded"
     assert job.stage == "text_extracted"
+
+
+def test_text_extraction_can_index_chunks_into_chromadb(
+    extraction_app: ExtractionApp,
+) -> None:
+    upload = upload_file(
+        extraction_app,
+        filename="indexed-note.txt",
+        content=(
+            b"Visit Date: 2025-02-14\n"
+            b"Hospital: Harmony General Hospital\n"
+            b"Physician: Dr. Asha Raman\n"
+            b"Diagnosis: Hypertension\n"
+            b"Medication: metoprolol 25 mg BID"
+        ),
+        content_type="text/plain",
+    )
+    collection = FakeChromaCollection()
+
+    with extraction_app.session_local() as db:
+        process_ingestion_job(
+            db,
+            UUID(upload["ingestion_job_id"]),
+            index_after_extraction=True,
+            encoder=FakeEmbeddingEncoder(),
+            collection=collection,
+        )
+        document = db.get(Document, UUID(upload["id"]))
+        job = db.get(IngestionJob, UUID(upload["ingestion_job_id"]))
+        chunks = db.scalars(
+            select(DocumentChunk)
+            .where(DocumentChunk.document_id == UUID(upload["id"]))
+            .order_by(DocumentChunk.chunk_index)
+        ).all()
+
+    assert collection.payload is not None
+    assert len(collection.payload["ids"]) == len(chunks)
+    assert document is not None
+    assert document.status.value == "indexed"
+    assert document.document_metadata["indexing"]["status"] == ChunkIndexingStatus.INDEXED.value
+    assert document.document_metadata["extraction"]["indexing"]["indexed_chunk_count"] == len(
+        chunks
+    )
+    assert job is not None
+    assert job.status.value == "succeeded"
+    assert job.stage == "indexed"
+    assert job.job_metadata["indexing"]["indexed_chunk_count"] == len(chunks)
+    assert all(chunk.embedding_id for chunk in chunks)
+    assert all(chunk.indexing_status == ChunkIndexingStatus.INDEXED.value for chunk in chunks)
 
 
 def test_typed_pdf_upload_can_be_extracted_with_pymupdf(extraction_app: ExtractionApp) -> None:
