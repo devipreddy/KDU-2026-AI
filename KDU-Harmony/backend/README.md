@@ -169,6 +169,30 @@ The reranker uses `BAAI/bge-reranker-large` by default and falls back to
 `BAAI/bge-reranker-base` if the larger model cannot be loaded. Only the top-N hybrid candidates
 are scored by the cross-encoder to keep latency bounded.
 
+## Parent Context And Citations
+
+Return citation-ready results with matched chunks expanded to their parent clinical section:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.context_expansion doctor@example.com "patients with cardiac issues treated in Q1 2025"
+```
+
+Context expansion returns the matched chunk, parent section text, source document, page number,
+section, citation label, retrieval scores, and a confidence score that incorporates reranker,
+hybrid, source, and OCR confidence signals.
+
+## PHI-Aware Rendering
+
+Render final search results according to role-based PHI visibility:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.services.result_rendering doctor@example.com "patients with cardiac issues treated in Q1 2025"
+```
+
+Doctors and records staff receive decrypted direct identifiers when their policies allow it,
+researchers receive de-identified clinical text, and administrators receive metadata-only results
+without clinical snippets or parent section text.
+
 ## PHI Lookup
 
 Authorized users can resolve a stored token through:

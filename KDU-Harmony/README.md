@@ -162,3 +162,7 @@ semantically before hydrating snippets from the database.
 Hybrid retrieval now combines BM25 and dense vector rankings with reciprocal rank fusion.
 Cross-encoder reranking now reorders the top hybrid candidates with a BGE reranker and smaller
 fallback model.
+Parent context expansion now returns matched chunks with parent section context, source citations,
+page/section metadata, and confidence signals.
+PHI-aware rendering now decrypts authorized clinician views, de-identifies researcher results, and
+returns metadata-only administrator views.
