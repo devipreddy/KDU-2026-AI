@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "healthcare-semantic-search-api"
+version = "0.1.0"
+description = "FastAPI backend for HIPAA-aware semantic search over synthetic medical records."
+requires-python = ">=3.11"
+dependencies = [
+    "alembic>=1.13.1",
+    "chromadb>=0.5.5,<0.6.0",
+    "fastapi>=0.111.0",
+    "httpx>=0.27.0",
+    "pymupdf>=1.24.0",
+    "pydantic-settings>=2.2.1",
+    "sentence-transformers>=2.7.0",
+    "psycopg[binary]>=3.1.18",
+    "python-multipart>=0.0.9",
+    "sqlalchemy>=2.0.30",
+    "structlog>=24.1.0",
+    "uvicorn[standard]>=0.29.0",
+]
+
+[project.scripts]
+generate-synthetic-records = "app.synthetic.generate_dataset:main"
+seed-auth-data = "app.db.seed:main"
+process-ingestion-jobs = "app.services.document_extraction:main"
+process-ocr-jobs = "app.services.document_ocr:main"
+bootstrap-chroma-index = "app.services.chroma_index:main"
+index-chunk-embeddings = "app.services.embedding_pipeline:main"
+understand-query = "app.services.query_understanding:main"
+authorize-query-filters = "app.services.retrieval_authorization:main"
+bm25-search = "app.services.bm25_retrieval:main"
+dense-search = "app.services.dense_retrieval:main"
+hybrid-search = "app.services.hybrid_retrieval:main"
+rerank-search = "app.services.cross_encoder_reranking:main"
+context-search = "app.services.context_expansion:main"
+render-search = "app.services.result_rendering:main"
+timeline-search = "app.services.timeline_reconstruction:main"
+retrieval-quality-benchmark = "app.services.retrieval_quality_benchmarks:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.6",
+    "ruff>=0.4.4",
+]
+observability = [
+    "langsmith>=0.1.0",
+    "googleapis-common-protos==1.63.2",
+    "opentelemetry-api==1.25.0",
+    "opentelemetry-exporter-otlp==1.25.0",
+    "opentelemetry-instrumentation-fastapi==0.46b0",
+    "opentelemetry-instrumentation-sqlalchemy==0.46b0",
+    "opentelemetry-sdk==1.25.0",
+]
+ocr = [
+]
+phi = [
+    "presidio-analyzer>=2.2.355",
+]
+full = [
+    "langsmith>=0.1.0",
+    "googleapis-common-protos==1.63.2",
+    "opentelemetry-api==1.25.0",
+    "opentelemetry-exporter-otlp==1.25.0",
+    "opentelemetry-instrumentation-fastapi==0.46b0",
+    "opentelemetry-instrumentation-sqlalchemy==0.46b0",
+    "opentelemetry-sdk==1.25.0",
+    "presidio-analyzer>=2.2.355",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+addopts = "-q -p no:cacheprovider"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "UP",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
