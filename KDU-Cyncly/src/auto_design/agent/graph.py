@@ -13,6 +13,8 @@ from auto_design.catalog.retrieval import (
     CatalogRetrievalQuery,
 )
 from auto_design.catalog.service import CatalogService
+from auto_design.planner.feasibility import analyze_feasibility
+from auto_design.planner.grammar import generate_topology_templates
 from auto_design.schemas.input import DesignInput
 from auto_design.schemas.intent import StructuredIntent
 
@@ -148,32 +150,45 @@ async def retrieve_catalog_node(state: PlanningState) -> PlanningState:
 
 
 def analyze_feasibility_node(state: PlanningState) -> PlanningState:
-    design_input = state["input"]
-    allowed_walls = [
-        wall.name for wall in design_input.environment.wall if wall.has_cabinets is not False
-    ]
+    result = analyze_feasibility(
+        design_input=state["input"],
+        intent=state["intent"],
+        catalog=state["catalog"],
+    )
     return {
-        "feasibility": {
-            "status": "skeleton",
-            "feasible": True,
-            "allowed_cabinet_walls": allowed_walls,
-            "notes": ["Detailed topology feasibility will be implemented in a later commit."],
-        },
+        "feasibility": result.to_payload(),
         "trace": _trace(state, "analyze_feasibility"),
     }
 
 
 def generate_variants_node(state: PlanningState) -> PlanningState:
     intent = state["intent"]
-    return {
-        "variants": [
+    feasibility = state.get("feasibility", {})
+    family = feasibility.get("selected_family") or intent.layout_family
+    templates = generate_topology_templates(feasibility)
+    variants = [
+        {
+            "id": f"variant-{template.family.lower()}-{index}",
+            "family": template.family,
+            "family_label": template.family_label,
+            "status": "topology_template",
+            "template_id": template.id,
+            "topology": template.to_payload(),
+            "notes": "Procedural topology template; exact coordinates are added later.",
+        }
+        for index, template in enumerate(templates, start=1)
+    ]
+    if not variants and family is not None:
+        variants = [
             {
-                "id": "variant-skeleton-1",
-                "family": intent.layout_family,
-                "status": "placeholder",
-                "notes": "Deterministic geometry generation is added in later commits.",
+                "id": "variant-template-unavailable",
+                "family": family,
+                "status": "template_unavailable",
+                "notes": "No procedural topology template could be derived from feasibility.",
             }
-        ],
+        ]
+    return {
+        "variants": variants,
         "trace": _trace(state, "generate_variants"),
     }
 
@@ -208,11 +223,13 @@ def score_variants_node(state: PlanningState) -> PlanningState:
 
 
 def assemble_output_node(state: PlanningState) -> PlanningState:
+    feasibility = state.get("feasibility", {})
     return {
         "output": {
             "status": "skeleton",
             "prompt": state.get("prompt", ""),
-            "layout_family": state["intent"].layout_family,
+            "layout_family": feasibility.get("selected_family") or state["intent"].layout_family,
+            "feasibility_status": feasibility.get("status"),
             "retrieval_categories": state.get("retrieval_categories", []),
             "variant_count": len(state.get("variants", [])),
             "ready_for_render": False,
