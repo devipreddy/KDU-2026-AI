@@ -130,6 +130,10 @@ def _components_for_zone(
         components: list[str] = []
         if "stove" not in excluded:
             components.append("stove")
+        if "oven" in required and "oven" not in excluded:
+            components.append("oven")
+        if "microwave" in required and "microwave" not in excluded:
+            components.append("microwave")
         if "hood" not in excluded:
             components.append("hood")
         return tuple(components)
@@ -152,6 +156,8 @@ def _is_required(component: str, required: set[str]) -> bool:
         "single_sink",
         "double_sink",
         "stove",
+        "oven",
+        "microwave",
         "fridge",
         "prep_counter",
         "prep_base_cabinet",

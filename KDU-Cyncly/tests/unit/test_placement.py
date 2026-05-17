@@ -27,12 +27,16 @@ def load_catalog() -> CatalogService:
     return CatalogService.load(ROOT / "catalog.json")
 
 
-def placement_plan_for(family: str | None = "L", name: str = "input1.json"):
+def placement_plan_for(
+    family: str | None = "L",
+    name: str = "input1.json",
+    required_items: list[str] | None = None,
+):
     design_input = load_design_input(name)
     catalog = load_catalog()
     intent = StructuredIntent(
         layout_family=family,
-        required_items=design_input.preferences.must_have,
+        required_items=required_items or design_input.preferences.must_have,
     )
     feasibility = analyze_feasibility(design_input, intent, catalog)
     template = generate_topology_templates(feasibility.to_payload())[0]
@@ -76,12 +80,62 @@ def test_appliances_and_sinks_have_equal_or_larger_base_backing() -> None:
     plan = placement_plan_for("L")
     backed_components = {"dishwasher", "fridge", "hood", "sink", "stove"}
 
+    assert plan.base_coverage_valid
     for item in plan.items:
         if item.component not in backed_components:
             continue
         assert item.backed_by_product_id is not None
         assert item.backing_width_mm is not None
         assert item.backing_width_mm >= item.dimensions_mm.width
+
+
+def test_explicit_base_coverage_records_cover_every_backed_item() -> None:
+    plan = placement_plan_for("L")
+    coverage_by_item = {
+        coverage.covered_item_key: coverage
+        for coverage in plan.base_coverages
+    }
+
+    backed_items = [
+        item for item in plan.items
+        if item.component in {"dishwasher", "fridge", "hood", "sink", "stove"}
+    ]
+
+    assert backed_items
+    assert {item.key for item in backed_items}.issubset(coverage_by_item)
+    for item in backed_items:
+        coverage = coverage_by_item[item.key]
+        assert coverage.wall == item.wall
+        assert coverage.run_role == item.run_role
+        assert coverage.covered_product_id == item.product_id
+        assert coverage.coverage_width_mm >= item.dimensions_mm.width
+        assert coverage.is_sufficient
+
+
+def test_requested_oven_gets_cooking_placement_and_base_coverage() -> None:
+    plan = placement_plan_for("L", required_items=["dishwasher", "hood", "oven"])
+    ovens = [item for item in plan.items if item.component == "oven"]
+    coverage_by_item = {
+        coverage.covered_item_key: coverage
+        for coverage in plan.base_coverages
+    }
+
+    assert len(ovens) == 1
+    assert ovens[0].zone_type == "cooking"
+    assert ovens[0].backed_by_product_id is not None
+    assert ovens[0].key in coverage_by_item
+    assert coverage_by_item[ovens[0].key].kind == "below"
+
+
+def test_base_coverage_payload_is_serializable_and_explicit() -> None:
+    payload = placement_plan_for("L").to_payload()
+
+    assert payload["base_coverage_valid"] is True
+    assert payload["base_coverages"]
+    first = payload["base_coverages"][0]
+    assert first["covered_item_key"]
+    assert first["base_product_id"].startswith("SKU-C")
+    assert first["coverage_width_mm"] >= first["covered_width_mm"]
 
 
 def test_layout_payload_uses_renderer_compatible_layout_items_and_known_skus() -> None:

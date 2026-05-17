@@ -18,12 +18,15 @@ HOOD_CENTER_Z_MM = 1900.0
 WALL_CABINET_CENTER_Z_MM = 1750.0
 
 PlacementLayer = Literal["base_run", "overhead"]
+CoverageKind = Literal["below", "behind"]
 
 FLOOR_RUN_COMPONENTS = {
     "base_cabinet",
     "dishwasher",
     "double_sink",
     "fridge",
+    "microwave",
+    "oven",
     "prep_base_cabinet",
     "single_sink",
     "sink",
@@ -36,6 +39,8 @@ BACKED_COMPONENTS = {
     "double_sink",
     "fridge",
     "hood",
+    "microwave",
+    "oven",
     "single_sink",
     "sink",
     "stove",
@@ -117,6 +122,51 @@ class PlacedItem:
 
 
 @dataclass(frozen=True)
+class BaseCoverage:
+    covered_item_key: str
+    covered_component: str
+    covered_product_id: str
+    base_product_id: str
+    base_product_type: str
+    wall: WallAnchor
+    run_role: RunRole
+    zone_type: ZoneType
+    kind: CoverageKind
+    start_mm: float
+    end_mm: float
+    covered_width_mm: float
+    coverage_width_mm: float
+    position_mm: PointMM
+    dimensions_mm: DimensionsMM
+    rotation_z_deg: float
+
+    @property
+    def is_sufficient(self) -> bool:
+        return self.coverage_width_mm >= self.covered_width_mm
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "covered_item_key": self.covered_item_key,
+            "covered_component": self.covered_component,
+            "covered_product_id": self.covered_product_id,
+            "base_product_id": self.base_product_id,
+            "base_product_type": self.base_product_type,
+            "wall": self.wall,
+            "run_role": self.run_role,
+            "zone_type": self.zone_type,
+            "kind": self.kind,
+            "start_mm": self.start_mm,
+            "end_mm": self.end_mm,
+            "covered_width_mm": self.covered_width_mm,
+            "coverage_width_mm": self.coverage_width_mm,
+            "position_mm": self.position_mm.to_dict(),
+            "dimensions_mm": self.dimensions_mm.to_dict(),
+            "rotation_z_deg": self.rotation_z_deg,
+            "is_sufficient": self.is_sufficient,
+        }
+
+
+@dataclass(frozen=True)
 class PlacementRun:
     wall: WallAnchor
     run_role: RunRole
@@ -167,6 +217,7 @@ class PlacementPlan:
     family: LayoutFamilyCode
     runs: tuple[PlacementRun, ...]
     overhead_items: tuple[PlacedItem, ...]
+    base_coverages: tuple[BaseCoverage, ...]
     rationale: tuple[str, ...]
 
     @property
@@ -177,6 +228,18 @@ class PlacementPlan:
     def is_continuous(self) -> bool:
         return all(run.is_continuous for run in self.runs)
 
+    @property
+    def base_coverage_valid(self) -> bool:
+        covered_keys = {coverage.covered_item_key for coverage in self.base_coverages}
+        required_keys = {
+            item.key
+            for item in self.items
+            if item.component in BACKED_COMPONENTS
+        }
+        return required_keys.issubset(covered_keys) and all(
+            coverage.is_sufficient for coverage in self.base_coverages
+        )
+
     def layout_payload(self) -> dict[str, dict[str, object]]:
         return {item.key: item.to_layout_item() for item in self.items}
 
@@ -186,8 +249,12 @@ class PlacementPlan:
             "family": self.family,
             "runs": [run.to_payload() for run in self.runs],
             "overhead_items": [item.to_payload() for item in self.overhead_items],
+            "base_coverages": [
+                coverage.to_payload() for coverage in self.base_coverages
+            ],
             "item_count": len(self.items),
             "is_continuous": self.is_continuous,
+            "base_coverage_valid": self.base_coverage_valid,
             "rationale": list(self.rationale),
         }
 
@@ -250,6 +317,10 @@ def _product_for_component(catalog: CatalogService, component: str) -> Product:
         return _choose_narrowest(_products_matching(catalog, "fridge", "refrigerator"))
     if component == "hood":
         return _choose_narrowest(_products_matching(catalog, "hood"))
+    if component == "microwave":
+        return _choose_narrowest(_products_matching(catalog, "microwave"))
+    if component == "oven":
+        return _choose_narrowest(_products_matching(catalog, "oven"))
     if component == "stove":
         return _choose_narrowest(_products_matching(catalog, "stove", "cooktop"))
     if component == "tall_cabinet":
@@ -469,6 +540,91 @@ def _place_overhead_item(
     )
 
 
+def _coverage_kind_for(item: PlacedItem) -> CoverageKind:
+    return "behind" if item.layer == "overhead" else "below"
+
+
+def _base_coverage_for_item(
+    item: PlacedItem,
+    *,
+    catalog: CatalogService,
+    bounds: RoomBounds,
+) -> BaseCoverage | None:
+    if item.component not in BACKED_COMPONENTS:
+        return None
+
+    base = _choose_base(catalog, min_width_mm=item.dimensions_mm.width)
+    dimensions = _product_dimensions(base)
+    center_offset = (item.start_mm + item.end_mm) / 2.0
+    start_mm = center_offset - (dimensions.width / 2.0)
+    end_mm = center_offset + (dimensions.width / 2.0)
+    wall_system = bounds.wall(item.wall)
+    return BaseCoverage(
+        covered_item_key=item.key,
+        covered_component=item.component,
+        covered_product_id=item.product_id,
+        base_product_id=base.id,
+        base_product_type=base.type,
+        wall=item.wall,
+        run_role=item.run_role,
+        zone_type=item.zone_type,
+        kind=_coverage_kind_for(item),
+        start_mm=start_mm,
+        end_mm=end_mm,
+        covered_width_mm=item.dimensions_mm.width,
+        coverage_width_mm=dimensions.width,
+        position_mm=wall_system.center_for(
+            offset_mm=center_offset,
+            depth_mm=dimensions.depth,
+            height_mm=dimensions.height,
+        ),
+        dimensions_mm=dimensions,
+        rotation_z_deg=wall_system.rotation_z_deg,
+    )
+
+
+def _base_coverages_for_items(
+    items: tuple[PlacedItem, ...],
+    *,
+    catalog: CatalogService,
+    bounds: RoomBounds,
+) -> tuple[BaseCoverage, ...]:
+    coverages = [
+        coverage
+        for item in items
+        if (
+            coverage := _base_coverage_for_item(
+                item,
+                catalog=catalog,
+                bounds=bounds,
+            )
+        )
+        is not None
+    ]
+    return tuple(coverages)
+
+
+def _validate_base_coverages(
+    items: tuple[PlacedItem, ...],
+    coverages: tuple[BaseCoverage, ...],
+) -> None:
+    coverage_by_item = {coverage.covered_item_key: coverage for coverage in coverages}
+    missing = [
+        item.key for item in items
+        if item.component in BACKED_COMPONENTS and item.key not in coverage_by_item
+    ]
+    insufficient = [
+        coverage.covered_item_key
+        for coverage in coverages
+        if not coverage.is_sufficient
+    ]
+    if missing or insufficient:
+        raise ValueError(
+            "Base coverage enforcement failed: "
+            f"missing={missing}, insufficient={insufficient}"
+        )
+
+
 def generate_placement_plan(
     environment: Environment,
     template: KitchenTopologyTemplate,
@@ -530,15 +686,26 @@ def generate_placement_plan(
             )
         )
 
+    all_items = tuple(item for run in placement_runs for item in run.items) + tuple(
+        overhead_items
+    )
+    base_coverages = _base_coverages_for_items(
+        all_items,
+        catalog=catalog,
+        bounds=bounds,
+    )
+    _validate_base_coverages(all_items, base_coverages)
+
     return PlacementPlan(
         template_id=template.id,
         family=template.family,
         runs=tuple(placement_runs),
         overhead_items=tuple(overhead_items),
+        base_coverages=base_coverages,
         rationale=(
             "Items are placed as snapped wall-run sequences, never as free-floating boxes.",
             "Each base run starts and ends with a base cabinet terminator.",
             "Adjacent base-run spans are generated from the previous item end offset.",
-            "Appliances and sinks carry equal-or-larger base backing metadata.",
+            "Appliances and sinks have explicit equal-or-larger base coverage records.",
         ),
     )

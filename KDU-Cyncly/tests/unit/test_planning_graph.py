@@ -46,6 +46,8 @@ def test_planning_graph_runs_required_pipeline_in_order() -> None:
     assert result["variants"][0]["zone_plan"]["family"] == "L"
     assert result["variants"][0]["zone_plan"]["item_assignments"]
     assert result["variants"][0]["placement"]["is_continuous"] is True
+    assert result["variants"][0]["placement"]["base_coverage_valid"] is True
+    assert result["variants"][0]["placement"]["base_coverages"]
     assert result["variants"][0]["layout"]
     assert result["violations"] == []
     assert result["repairs"] == []

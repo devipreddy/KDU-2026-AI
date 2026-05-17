@@ -27,6 +27,7 @@ from auto_design.planner.grammar import (
 )
 from auto_design.planner.placement import (
     MAX_CONTINUITY_GAP_MM,
+    BaseCoverage,
     PlacedItem,
     PlacementPlan,
     PlacementRun,
@@ -57,6 +58,7 @@ __all__ = [
     "ItemZoneAssignment",
     "MacroZonePlan",
     "MAX_CONTINUITY_GAP_MM",
+    "BaseCoverage",
     "PlacedItem",
     "PlacementPlan",
     "PlacementRun",
