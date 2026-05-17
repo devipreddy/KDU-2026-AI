@@ -15,6 +15,8 @@ from auto_design.catalog.retrieval import (
 from auto_design.catalog.service import CatalogService
 from auto_design.planner.feasibility import analyze_feasibility
 from auto_design.planner.grammar import generate_topology_templates
+from auto_design.planner.placement import generate_placement_plan
+from auto_design.planner.zones import plan_zones_for_template
 from auto_design.schemas.input import DesignInput
 from auto_design.schemas.intent import StructuredIntent
 
@@ -166,18 +168,29 @@ def generate_variants_node(state: PlanningState) -> PlanningState:
     feasibility = state.get("feasibility", {})
     family = feasibility.get("selected_family") or intent.layout_family
     templates = generate_topology_templates(feasibility)
-    variants = [
-        {
-            "id": f"variant-{template.family.lower()}-{index}",
-            "family": template.family,
-            "family_label": template.family_label,
-            "status": "topology_template",
-            "template_id": template.id,
-            "topology": template.to_payload(),
-            "notes": "Procedural topology template; exact coordinates are added later.",
-        }
-        for index, template in enumerate(templates, start=1)
-    ]
+    variants: list[dict[str, object]] = []
+    for index, template in enumerate(templates, start=1):
+        zone_plan = plan_zones_for_template(template, intent)
+        placement_plan = generate_placement_plan(
+            state["input"].environment,
+            template,
+            zone_plan,
+            state["catalog"],
+        )
+        variants.append(
+            {
+                "id": f"variant-{template.family.lower()}-{index}",
+                "family": template.family,
+                "family_label": template.family_label,
+                "status": "placed_template",
+                "template_id": template.id,
+                "topology": template.to_payload(),
+                "zone_plan": zone_plan.to_payload(),
+                "placement": placement_plan.to_payload(),
+                "layout": placement_plan.layout_payload(),
+                "notes": "Continuous snapped cabinet and appliance runs generated.",
+            }
+        )
     if not variants and family is not None:
         variants = [
             {

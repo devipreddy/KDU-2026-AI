@@ -41,8 +41,12 @@ def test_planning_graph_runs_required_pipeline_in_order() -> None:
     assert len(result["variants"]) == 3
     assert result["variants"][0]["id"] == "variant-l-1"
     assert result["variants"][0]["family"] == "L"
-    assert result["variants"][0]["status"] == "topology_template"
+    assert result["variants"][0]["status"] == "placed_template"
     assert result["variants"][0]["topology"]["family"] == "L"
+    assert result["variants"][0]["zone_plan"]["family"] == "L"
+    assert result["variants"][0]["zone_plan"]["item_assignments"]
+    assert result["variants"][0]["placement"]["is_continuous"] is True
+    assert result["variants"][0]["layout"]
     assert result["violations"] == []
     assert result["repairs"] == []
     assert result["scores"][0]["variant_id"] == "variant-l-1"
@@ -111,3 +115,5 @@ def test_planning_graph_requested_family_only_returns_that_family() -> None:
     assert result["feasibility"]["selected_family"] == "I"
     assert {variant["family"] for variant in result["variants"]} == {"I"}
     assert {variant["topology"]["family"] for variant in result["variants"]} == {"I"}
+    assert {variant["zone_plan"]["family"] for variant in result["variants"]} == {"I"}
+    assert {variant["placement"]["family"] for variant in result["variants"]} == {"I"}

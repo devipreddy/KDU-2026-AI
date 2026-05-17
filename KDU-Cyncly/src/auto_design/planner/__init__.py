@@ -25,6 +25,20 @@ from auto_design.planner.grammar import (
     RunSegmentTemplate,
     generate_topology_templates,
 )
+from auto_design.planner.placement import (
+    MAX_CONTINUITY_GAP_MM,
+    PlacedItem,
+    PlacementPlan,
+    PlacementRun,
+    generate_placement_plan,
+)
+from auto_design.planner.zones import (
+    ZONE_ORDER,
+    ItemZoneAssignment,
+    MacroZonePlan,
+    ZoneAssignment,
+    plan_zones_for_template,
+)
 
 __all__ = [
     "MIN_I_RUN_MM",
@@ -40,12 +54,22 @@ __all__ = [
     "GRAMMAR_VARIANTS",
     "GrammarStep",
     "KitchenTopologyTemplate",
+    "ItemZoneAssignment",
+    "MacroZonePlan",
+    "MAX_CONTINUITY_GAP_MM",
+    "PlacedItem",
+    "PlacementPlan",
+    "PlacementRun",
     "allowed_wall_runs",
     "analyze_feasibility",
     "analyze_topology_fits",
     "generate_topology_templates",
+    "generate_placement_plan",
+    "plan_zones_for_template",
     "required_appliance_footprint_mm",
     "required_footprint_items",
     "RunSegmentTemplate",
     "WALLS_PER_FAMILY",
+    "ZONE_ORDER",
+    "ZoneAssignment",
 ]
