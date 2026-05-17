@@ -1,0 +1,2 @@
+"""MCP catalog server package."""
+
