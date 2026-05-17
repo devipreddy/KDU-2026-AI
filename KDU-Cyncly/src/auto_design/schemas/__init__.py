@@ -4,7 +4,12 @@ from auto_design.schemas.catalog import Product, ProductCatalog, ProductConstrai
 from auto_design.schemas.common import DimensionsMM, HexColor, Point3D, WallDimensions
 from auto_design.schemas.environment import Environment, Floor, Opening, Wall
 from auto_design.schemas.input import DesignInput, Preferences
-from auto_design.schemas.intent import ColorRequest, StructuredIntent
+from auto_design.schemas.intent import (
+    ColorRequest,
+    MaterialRequest,
+    PromptConstraint,
+    StructuredIntent,
+)
 from auto_design.schemas.output import (
     LayoutItem,
     LayoutResponse,
@@ -23,12 +28,14 @@ __all__ = [
     "LayoutItem",
     "LayoutResponse",
     "LayoutVariant",
+    "MaterialRequest",
     "Opening",
     "Point3D",
     "Preferences",
     "Product",
     "ProductCatalog",
     "ProductConstraints",
+    "PromptConstraint",
     "Rationale",
     "StructuredIntent",
     "Violation",
