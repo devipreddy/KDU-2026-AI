@@ -121,7 +121,12 @@ def _color_target(text: str, keyword: str) -> str:
     context = f"{before_keyword[-40:]} {after_keyword[:60]}"
     if "base cabinet" in context or "base cabinets" in context:
         return "base_cabinets"
-    if "upper" in context or "wall cabinet" in context or "wall cabinets" in context:
+    negated_upper = re.search(
+        r"\b(?:no|without|avoid|exclude|skip)\s+(?:upper|uppers|wall\s+cabinets?)\b",
+        context,
+    )
+    positive_upper = "upper" in context or "wall cabinet" in context or "wall cabinets" in context
+    if positive_upper and not negated_upper:
         return "wall_cabinets"
     if "tall" in context or "pantry" in context:
         return "tall_cabinets"

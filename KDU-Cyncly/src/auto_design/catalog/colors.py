@@ -94,7 +94,12 @@ def infer_color_target(prompt: str, term: str) -> str:
     context = f"{before[-50:]} {after[:70]}"
     if "base cabinet" in context or "base cabinets" in context:
         return "base_cabinets"
-    if "upper" in context or "wall cabinet" in context or "wall cabinets" in context:
+    negated_upper = re.search(
+        r"\b(?:no|without|avoid|exclude|skip)\s+(?:upper|uppers|wall\s+cabinets?)\b",
+        context,
+    )
+    positive_upper = "upper" in context or "wall cabinet" in context or "wall cabinets" in context
+    if positive_upper and not negated_upper:
         return "wall_cabinets"
     if "tall" in context or "pantry" in context:
         return "tall_cabinets"

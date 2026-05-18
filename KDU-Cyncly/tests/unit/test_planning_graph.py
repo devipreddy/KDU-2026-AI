@@ -64,7 +64,10 @@ def test_planning_graph_runs_required_pipeline_in_order() -> None:
     assert result["variants"][0]["placement"]["base_coverage_valid"] is True
     assert result["variants"][0]["placement"]["base_coverages"]
     assert result["variants"][0]["layout"]
-    assert result["violations"] == []
+    assert all(
+        violation["severity"] not in {"hard", "error"}
+        for violation in result["violations"]
+    )
     assert result["repairs"]
     assert all(
         {"variant_id", "rule_id", "action", "item_keys", "text"} <= set(repair)

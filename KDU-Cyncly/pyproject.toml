@@ -20,6 +20,10 @@ dependencies = [
     "pydantic>=2.8",
 ]
 
+[project.scripts]
+kitchen-catalog-partition = "auto_design.catalog.partition:main"
+kitchen-catalog-mcp = "auto_design.mcp_server.catalog:main"
+
 [project.optional-dependencies]
 llm-providers = [
     "langchain-anthropic>=0.2",

@@ -147,6 +147,7 @@ async def _generate_variant_worker(
         template,
         zone_plan,
         catalog,
+        intent,
     )
     return GeneratedVariant(
         index=index,

@@ -170,8 +170,8 @@ def test_base_coverage_and_corner_rules_detect_invalid_payloads() -> None:
     placement["base_coverage_valid"] = False
     first_coverage["is_sufficient"] = False
     first_coverage["coverage_width_mm"] = 100.0
-    fridge["start_mm"] = 1700.0
-    fridge["end_mm"] = 2400.0
+    fridge["start_mm"] = 1100.0
+    fridge["end_mm"] = 1800.0
 
     result = validate_variant(environment, variant)
 

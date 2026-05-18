@@ -217,6 +217,7 @@ def repair_variants_node(state: PlanningState) -> PlanningState:
         state["input"].environment,
         state["catalog"],
         state.get("variants", []),
+        state["intent"],
     )
     return {
         "variants": [result.variant for result in repair_results],

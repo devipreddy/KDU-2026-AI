@@ -9,7 +9,7 @@ from auto_design.planner.grammar import KitchenTopologyTemplate, RunRole, ZoneTy
 from auto_design.planner.zones import MacroZonePlan
 from auto_design.schemas.catalog import Product
 from auto_design.schemas.environment import Environment, WallAnchor
-from auto_design.schemas.intent import LayoutFamilyCode
+from auto_design.schemas.intent import LayoutFamilyCode, StructuredIntent
 
 
 MAX_CONTINUITY_GAP_MM = 50.0
@@ -282,7 +282,32 @@ def _choose_narrowest(products: tuple[Product, ...]) -> Product:
     return min(products, key=lambda product: (float(product.width_mm), product.id))
 
 
-def _base_candidates(catalog: CatalogService, *, min_width_mm: float = 0.0) -> tuple[Product, ...]:
+def _preferred_base_skus(intent: StructuredIntent | None) -> set[str]:
+    if intent is None or intent.cabinet_color is None:
+        return set()
+    if intent.cabinet_color.target not in {"cabinets", "base_cabinets"}:
+        return set()
+    return set(intent.cabinet_color.matched_skus)
+
+
+def _base_candidates(
+    catalog: CatalogService,
+    *,
+    min_width_mm: float = 0.0,
+    intent: StructuredIntent | None = None,
+) -> tuple[Product, ...]:
+    preferred_skus = _preferred_base_skus(intent)
+    if preferred_skus:
+        preferred = tuple(
+            product
+            for product in catalog.by_category("cabinet")
+            if product.id in preferred_skus
+            and product.type.startswith(("base_", "base"))
+            and float(product.width_mm) >= min_width_mm
+        )
+        if preferred:
+            return preferred
+
     return tuple(
         product
         for product in catalog.by_category("cabinet")
@@ -292,8 +317,13 @@ def _base_candidates(catalog: CatalogService, *, min_width_mm: float = 0.0) -> t
     )
 
 
-def _choose_base(catalog: CatalogService, *, min_width_mm: float = 0.0) -> Product:
-    candidates = _base_candidates(catalog, min_width_mm=min_width_mm)
+def _choose_base(
+    catalog: CatalogService,
+    *,
+    min_width_mm: float = 0.0,
+    intent: StructuredIntent | None = None,
+) -> Product:
+    candidates = _base_candidates(catalog, min_width_mm=min_width_mm, intent=intent)
     if candidates:
         return _choose_narrowest(candidates)
     fallback = tuple(
@@ -304,9 +334,13 @@ def _choose_base(catalog: CatalogService, *, min_width_mm: float = 0.0) -> Produ
     return _choose_narrowest(fallback)
 
 
-def _product_for_component(catalog: CatalogService, component: str) -> Product:
+def _product_for_component(
+    catalog: CatalogService,
+    component: str,
+    intent: StructuredIntent | None = None,
+) -> Product:
     if component in {"base_cabinet", "prep_base_cabinet"}:
-        return _choose_base(catalog, min_width_mm=COMPACT_BASE_WIDTH_MM)
+        return _choose_base(catalog, min_width_mm=COMPACT_BASE_WIDTH_MM, intent=intent)
     if component == "dishwasher":
         return _choose_narrowest(_products_matching(catalog, "dishwasher"))
     if component == "double_sink":
@@ -334,10 +368,11 @@ def _backing_for_component(
     catalog: CatalogService,
     component: str,
     width_mm: float,
+    intent: StructuredIntent | None = None,
 ) -> Product | None:
     if component not in BACKED_COMPONENTS:
         return None
-    return _choose_base(catalog, min_width_mm=width_mm)
+    return _choose_base(catalog, min_width_mm=width_mm, intent=intent)
 
 
 def _base_sequence_from_zone_plan(
@@ -345,6 +380,7 @@ def _base_sequence_from_zone_plan(
     zone_plan: MacroZonePlan,
     wall: WallAnchor,
     catalog: CatalogService,
+    intent: StructuredIntent | None = None,
 ) -> list[SequenceComponent]:
     zone_components = {
         (zone.zone_type, zone.wall): zone.components
@@ -368,7 +404,7 @@ def _base_sequence_from_zone_plan(
                 SequenceComponent(
                     component=component,
                     zone_type=step.zone_type,
-                    product=_product_for_component(catalog, component),
+                    product=_product_for_component(catalog, component, intent),
                     optional=component in {"base_cabinet", "prep_base_cabinet"},
                 )
             )
@@ -378,8 +414,13 @@ def _base_sequence_from_zone_plan(
 def _with_base_terminators(
     sequence: list[SequenceComponent],
     catalog: CatalogService,
+    intent: StructuredIntent | None = None,
 ) -> list[SequenceComponent]:
-    terminator_product = _choose_base(catalog, min_width_mm=COMPACT_BASE_WIDTH_MM)
+    terminator_product = _choose_base(
+        catalog,
+        min_width_mm=COMPACT_BASE_WIDTH_MM,
+        intent=intent,
+    )
     result = list(sequence)
     if not result or result[0].component not in BASE_COMPONENTS:
         result.insert(
@@ -441,12 +482,18 @@ def _place_base_item(
     start_mm: float,
     bounds: RoomBounds,
     catalog: CatalogService,
+    intent: StructuredIntent | None = None,
 ) -> PlacedItem:
     product = component.product
     dimensions = _product_dimensions(product)
     end_mm = start_mm + dimensions.width
     wall_system = bounds.wall(wall)
-    backing = _backing_for_component(catalog, component.component, dimensions.width)
+    backing = _backing_for_component(
+        catalog,
+        component.component,
+        dimensions.width,
+        intent,
+    )
     return PlacedItem(
         key=key,
         component=component.component,
@@ -506,13 +553,14 @@ def _place_overhead_item(
     anchor: PlacedItem,
     catalog: CatalogService,
     bounds: RoomBounds,
+    intent: StructuredIntent | None = None,
 ) -> PlacedItem:
-    product = _product_for_component(catalog, component)
+    product = _product_for_component(catalog, component, intent)
     dimensions = _product_dimensions(product)
     wall_system = bounds.wall(anchor.wall)
     center_z = HOOD_CENTER_Z_MM if component == "hood" else WALL_CABINET_CENTER_Z_MM
     center_offset = (anchor.start_mm + anchor.end_mm) / 2.0
-    backing = _backing_for_component(catalog, component, dimensions.width)
+    backing = _backing_for_component(catalog, component, dimensions.width, intent)
     return PlacedItem(
         key=key,
         component=component,
@@ -549,11 +597,12 @@ def _base_coverage_for_item(
     *,
     catalog: CatalogService,
     bounds: RoomBounds,
+    intent: StructuredIntent | None = None,
 ) -> BaseCoverage | None:
     if item.component not in BACKED_COMPONENTS:
         return None
 
-    base = _choose_base(catalog, min_width_mm=item.dimensions_mm.width)
+    base = _choose_base(catalog, min_width_mm=item.dimensions_mm.width, intent=intent)
     dimensions = _product_dimensions(base)
     center_offset = (item.start_mm + item.end_mm) / 2.0
     start_mm = center_offset - (dimensions.width / 2.0)
@@ -588,6 +637,7 @@ def _base_coverages_for_items(
     *,
     catalog: CatalogService,
     bounds: RoomBounds,
+    intent: StructuredIntent | None = None,
 ) -> tuple[BaseCoverage, ...]:
     coverages = [
         coverage
@@ -597,6 +647,7 @@ def _base_coverages_for_items(
                 item,
                 catalog=catalog,
                 bounds=bounds,
+                intent=intent,
             )
         )
         is not None
@@ -630,6 +681,7 @@ def generate_placement_plan(
     template: KitchenTopologyTemplate,
     zone_plan: MacroZonePlan,
     catalog: CatalogService,
+    intent: StructuredIntent | None = None,
 ) -> PlacementPlan:
     bounds = RoomBounds.from_environment(environment)
     placement_runs: list[PlacementRun] = []
@@ -637,8 +689,14 @@ def generate_placement_plan(
     item_counts: dict[str, int] = {}
 
     for run in template.runs:
-        sequence = _base_sequence_from_zone_plan(template, zone_plan, run.wall, catalog)
-        sequence = _with_base_terminators(sequence, catalog)
+        sequence = _base_sequence_from_zone_plan(
+            template,
+            zone_plan,
+            run.wall,
+            catalog,
+            intent,
+        )
+        sequence = _with_base_terminators(sequence, catalog, intent)
         sequence = _compact_to_fit(sequence, max_width_mm=run.length_mm)
 
         cursor = run.start_mm
@@ -655,6 +713,7 @@ def generate_placement_plan(
                 start_mm=cursor,
                 bounds=bounds,
                 catalog=catalog,
+                intent=intent,
             )
             placed_items.append(item)
             cursor = item.end_mm
@@ -673,6 +732,7 @@ def generate_placement_plan(
                     anchor=anchor,
                     catalog=catalog,
                     bounds=bounds,
+                    intent=intent,
                 )
             )
 
@@ -693,6 +753,7 @@ def generate_placement_plan(
         all_items,
         catalog=catalog,
         bounds=bounds,
+        intent=intent,
     )
     _validate_base_coverages(all_items, base_coverages)
 

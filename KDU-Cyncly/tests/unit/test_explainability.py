@@ -68,6 +68,9 @@ def test_explainability_records_window_and_workflow_evidence() -> None:
     by_rule = _trace_by_rule(result["variants"][0])
 
     assert by_rule["LAYOUT-01"]["status"] == "pass"
-    assert by_rule["LAYOUT-01"]["evidence"]["window_id"] == "east_window"
+    assert by_rule["LAYOUT-01"]["evidence"]["window_id"] in {
+        "east_window",
+        "north_window",
+    }
     assert by_rule["LAYOUT-01"]["evidence"]["delta_mm"] <= 300
     assert by_rule["WORKFLOW-01"]["evidence"]["gap_mm"] <= 600

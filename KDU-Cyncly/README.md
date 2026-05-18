@@ -38,6 +38,12 @@ No other dependencies. Drop `render.py`, `layout.py`, and `catalog.json` in the 
 ## Quick start
 
 ```bash
+# Generate renderer-compatible output from an input room and prompt
+python -m auto_design generate --input input3.json --prompt "navy blue L-shape with no uppers" --output output.json
+
+# Generate, then call the existing render.py in strict mode
+python -m auto_design generate-render --input input3.json --prompt "navy blue L-shape with no uppers" --output output.json
+
 # Render all variants from the sample output — PNGs go to ./renders/
 python render.py output.json
 

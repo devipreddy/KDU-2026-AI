@@ -16,6 +16,7 @@ from auto_design.geometry import (
 )
 from auto_design.schemas.catalog import Product
 from auto_design.schemas.environment import Environment
+from auto_design.schemas.intent import StructuredIntent
 from auto_design.validation import (
     VariantValidationResult,
     flatten_validation_results,
@@ -179,7 +180,31 @@ def _product_dimensions(product: Product) -> dict[str, float]:
     }
 
 
-def _base_product(catalog: CatalogService, *, min_width_mm: float = 0.0) -> Product:
+def _preferred_base_skus(intent: StructuredIntent | None) -> set[str]:
+    if intent is None or intent.cabinet_color is None:
+        return set()
+    if intent.cabinet_color.target not in {"cabinets", "base_cabinets"}:
+        return set()
+    return set(intent.cabinet_color.matched_skus)
+
+
+def _base_product(
+    catalog: CatalogService,
+    *,
+    min_width_mm: float = 0.0,
+    intent: StructuredIntent | None = None,
+) -> Product:
+    preferred_skus = _preferred_base_skus(intent)
+    if preferred_skus:
+        preferred = [
+            product for product in catalog.by_category("cabinet")
+            if product.id in preferred_skus
+            and product.type.startswith(("base_", "base"))
+            and float(product.width_mm) >= min_width_mm
+        ]
+        if preferred:
+            return min(preferred, key=lambda product: (float(product.width_mm), product.id))
+
     candidates = [
         product for product in catalog.by_category("cabinet")
         if product.type.startswith(("base_cabinet", "base_drawer"))
@@ -411,8 +436,9 @@ def _new_base_item(
     prefix: str,
     terminator: bool,
     min_width_mm: float = 0.0,
+    intent: StructuredIntent | None = None,
 ) -> dict[str, Any]:
-    product = _base_product(catalog, min_width_mm=min_width_mm)
+    product = _base_product(catalog, min_width_mm=min_width_mm, intent=intent)
     dimensions = _product_dimensions(product)
     return {
         "key": _next_repair_key(variant, prefix),
@@ -441,6 +467,7 @@ def _rebuild_base_coverages(
     variant: dict[str, object],
     catalog: CatalogService,
     bounds: RoomBounds,
+    intent: StructuredIntent | None = None,
 ) -> tuple[str, ...]:
     coverages: list[dict[str, object]] = []
     repaired_item_keys: list[str] = []
@@ -448,7 +475,7 @@ def _rebuild_base_coverages(
         if item.get("component") not in BACKED_COMPONENTS:
             continue
         width = _item_width(item)
-        base = _base_product(catalog, min_width_mm=width)
+        base = _base_product(catalog, min_width_mm=width, intent=intent)
         dimensions = _product_dimensions(base)
         start = _as_float(item.get("start_mm"))
         end = _as_float(item.get("end_mm"))
@@ -532,6 +559,7 @@ def _repair_terminators_and_continuity(
     variant: dict[str, object],
     catalog: CatalogService,
     bounds: RoomBounds,
+    intent: StructuredIntent | None = None,
 ) -> tuple[str, ...]:
     changed: list[str] = []
     for run in _runs(variant):
@@ -545,6 +573,7 @@ def _repair_terminators_and_continuity(
                 run,
                 prefix=f"repair_start_base_{run.get('wall')}",
                 terminator=True,
+                intent=intent,
             )
             items.insert(0, new_item)
             run["items"] = items
@@ -556,6 +585,7 @@ def _repair_terminators_and_continuity(
                 run,
                 prefix=f"repair_end_base_{run.get('wall')}",
                 terminator=True,
+                intent=intent,
             )
             items.append(new_item)
             run["items"] = items
@@ -566,7 +596,7 @@ def _repair_terminators_and_continuity(
             - _as_float(items[index].get("end_mm"))
             for index in range(len(items) - 1)
         ]
-        base_width = float(_base_product(catalog).width_mm)
+        base_width = float(_base_product(catalog, intent=intent).width_mm)
         insert_after: list[int] = [
             index for index, gap in enumerate(gaps)
             if abs(gap) > MAX_CONTINUITY_GAP_MM and gap >= base_width
@@ -579,6 +609,7 @@ def _repair_terminators_and_continuity(
                 prefix=f"repair_filler_base_{run.get('wall')}",
                 terminator=False,
                 min_width_mm=base_width,
+                intent=intent,
             )
             items.insert(index + 1, new_item)
             changed.append(_item_key(new_item))
@@ -702,6 +733,7 @@ def _separate_stove_and_fridge(
     variant: dict[str, object],
     catalog: CatalogService,
     bounds: RoomBounds,
+    intent: StructuredIntent | None = None,
 ) -> tuple[str, ...]:
     stove = next((item for item in _all_items(variant) if item.get("component") == "stove"), None)
     fridge = next((item for item in _all_items(variant) if item.get("component") == "fridge"), None)
@@ -726,6 +758,7 @@ def _separate_stove_and_fridge(
                 prefix=f"repair_separator_base_{stove_run.get('wall')}",
                 terminator=False,
                 min_width_mm=600.0,
+                intent=intent,
             )
             items.insert(insert_at, separator)
             stove_run["items"] = items
@@ -819,6 +852,7 @@ def _repair_once(
     variant: dict[str, object],
     validation: VariantValidationResult,
     actions: list[RepairAction],
+    intent: StructuredIntent | None = None,
 ) -> bool:
     bounds = RoomBounds.from_environment(environment)
     variant_id = str(variant.get("id") or "variant")
@@ -830,6 +864,7 @@ def _repair_once(
             variant,
             catalog,
             bounds,
+            intent,
         )
         if item_keys:
             actions.append(
@@ -893,7 +928,7 @@ def _repair_once(
             changed = True
 
     if "WORKFLOW-02" in rule_ids:
-        item_keys = _separate_stove_and_fridge(variant, catalog, bounds)
+        item_keys = _separate_stove_and_fridge(variant, catalog, bounds, intent)
         if not item_keys:
             item_keys = _move_stove_away_from_fridge(variant, bounds)
         if item_keys:
@@ -937,7 +972,7 @@ def _repair_once(
             changed = True
 
     if "LAYOUT-04" in rule_ids:
-        item_keys = _rebuild_base_coverages(variant, catalog, bounds)
+        item_keys = _rebuild_base_coverages(variant, catalog, bounds, intent)
         if item_keys:
             actions.append(
                 RepairAction(
@@ -961,6 +996,7 @@ def repair_variant(
     catalog: CatalogService,
     variant: Mapping[str, object],
     *,
+    intent: StructuredIntent | None = None,
     max_passes: int = 3,
 ) -> RepairResult:
     repaired = copy.deepcopy(dict(variant))
@@ -970,7 +1006,14 @@ def repair_variant(
     for _ in range(max_passes):
         if not validation.violations:
             break
-        changed = _repair_once(environment, catalog, repaired, validation, actions)
+        changed = _repair_once(
+            environment,
+            catalog,
+            repaired,
+            validation,
+            actions,
+            intent,
+        )
         validation = validate_variant(environment, repaired)
         if not changed:
             break
@@ -991,9 +1034,10 @@ def repair_variants(
     environment: Environment,
     catalog: CatalogService,
     variants: list[dict[str, object]],
+    intent: StructuredIntent | None = None,
 ) -> tuple[RepairResult, ...]:
     return tuple(
-        repair_variant(environment, catalog, variant)
+        repair_variant(environment, catalog, variant, intent=intent)
         for variant in variants
     )
 
