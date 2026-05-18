@@ -1,0 +1,61 @@
+"""Deterministic spatial geometry package."""
+
+from auto_design.geometry.openings import (
+    DEFAULT_DOOR_SWING_CLEARANCE_MM,
+    DEFAULT_OPENING_FRONT_CLEARANCE_MM,
+    OpeningConstraint,
+    OpeningConstraintSet,
+    WallSpan,
+    build_opening_constraints,
+    door_swing_aabb,
+    front_clearance_aabb,
+    opening_constraint_for,
+    opening_physical_aabb,
+    opening_wall_span,
+)
+from auto_design.geometry.primitives import (
+    AABB,
+    DimensionsMM,
+    PointMM,
+    RoomBounds,
+    WallCoordinateSystem,
+    aabb_for_item,
+    normalize_rotation_z,
+    rotation_for_anchor,
+)
+from auto_design.geometry.spatial_index import (
+    DEFAULT_SPATIAL_CELL_SIZE_MM,
+    CellCoord,
+    CollisionPair,
+    IndexedAABB,
+    SpatialHashIndex,
+    cells_for_aabb,
+)
+
+__all__ = [
+    "AABB",
+    "DEFAULT_DOOR_SWING_CLEARANCE_MM",
+    "DEFAULT_OPENING_FRONT_CLEARANCE_MM",
+    "DEFAULT_SPATIAL_CELL_SIZE_MM",
+    "DimensionsMM",
+    "CellCoord",
+    "CollisionPair",
+    "IndexedAABB",
+    "OpeningConstraint",
+    "OpeningConstraintSet",
+    "PointMM",
+    "RoomBounds",
+    "SpatialHashIndex",
+    "WallSpan",
+    "WallCoordinateSystem",
+    "aabb_for_item",
+    "build_opening_constraints",
+    "cells_for_aabb",
+    "door_swing_aabb",
+    "front_clearance_aabb",
+    "normalize_rotation_z",
+    "opening_constraint_for",
+    "opening_physical_aabb",
+    "opening_wall_span",
+    "rotation_for_anchor",
+]
