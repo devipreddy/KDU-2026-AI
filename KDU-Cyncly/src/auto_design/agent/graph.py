@@ -13,6 +13,8 @@ from auto_design.catalog.retrieval import (
     CatalogRetrievalQuery,
 )
 from auto_design.catalog.service import CatalogService
+from auto_design.explainability import attach_rationales_to_variants
+from auto_design.output import build_renderer_output_envelope
 from auto_design.planner.feasibility import analyze_feasibility
 from auto_design.planner.variants import generate_layout_variants_async
 from auto_design.repair import (
@@ -231,6 +233,13 @@ def score_variants_node(state: PlanningState) -> PlanningState:
         catalog=state["catalog"],
         feasibility=state.get("feasibility", {}),
     )
+    variants = attach_rationales_to_variants(
+        variants,
+        intent=state["intent"],
+        environment=state["input"].environment,
+        feasibility=state.get("feasibility", {}),
+        retrieval_results=state.get("retrieval_results", {}),
+    )
     return {
         "variants": variants,
         "scores": scores,
@@ -239,17 +248,13 @@ def score_variants_node(state: PlanningState) -> PlanningState:
 
 
 def assemble_output_node(state: PlanningState) -> PlanningState:
-    feasibility = state.get("feasibility", {})
     return {
-        "output": {
-            "status": "skeleton",
-            "prompt": state.get("prompt", ""),
-            "layout_family": feasibility.get("selected_family") or state["intent"].layout_family,
-            "feasibility_status": feasibility.get("status"),
-            "retrieval_categories": state.get("retrieval_categories", []),
-            "variant_count": len(state.get("variants", [])),
-            "ready_for_render": False,
-        },
+        "output": build_renderer_output_envelope(
+            design_input=state["input"],
+            variants=state.get("variants", []),
+            repairs=state.get("repairs", []),
+            violations=state.get("violations", []),
+        ),
         "trace": _trace(state, "assemble_output"),
     }
 
