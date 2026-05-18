@@ -17,8 +17,14 @@ from auto_design.planner.feasibility import analyze_feasibility
 from auto_design.planner.grammar import generate_topology_templates
 from auto_design.planner.placement import generate_placement_plan
 from auto_design.planner.zones import plan_zones_for_template
+from auto_design.repair import (
+    flatten_repair_actions,
+    flatten_repair_violations,
+    repair_variants,
+)
 from auto_design.schemas.input import DesignInput
 from auto_design.schemas.intent import StructuredIntent
+from auto_design.validation import flatten_validation_results, validate_variants
 
 
 GRAPH_NODE_ORDER = (
@@ -207,15 +213,42 @@ def generate_variants_node(state: PlanningState) -> PlanningState:
 
 
 def validate_variants_node(state: PlanningState) -> PlanningState:
+    validation_results = validate_variants(
+        state["input"].environment,
+        state.get("variants", []),
+    )
+    violations_by_variant = {
+        result.variant_id: [
+            violation.to_payload()
+            for violation in result.violations
+        ]
+        for result in validation_results
+    }
+    variants = []
+    for variant in state.get("variants", []):
+        variant_with_violations = dict(variant)
+        variant_with_violations["violations"] = violations_by_variant.get(
+            str(variant.get("id") or ""),
+            [],
+        )
+        variants.append(variant_with_violations)
     return {
-        "violations": [],
+        "variants": variants,
+        "violations": flatten_validation_results(validation_results),
         "trace": _trace(state, "validate"),
     }
 
 
 def repair_variants_node(state: PlanningState) -> PlanningState:
+    repair_results = repair_variants(
+        state["input"].environment,
+        state["catalog"],
+        state.get("variants", []),
+    )
     return {
-        "repairs": [],
+        "variants": [result.variant for result in repair_results],
+        "repairs": flatten_repair_actions(repair_results),
+        "violations": flatten_repair_violations(repair_results),
         "trace": _trace(state, "repair"),
     }
 

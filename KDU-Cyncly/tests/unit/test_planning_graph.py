@@ -50,7 +50,17 @@ def test_planning_graph_runs_required_pipeline_in_order() -> None:
     assert result["variants"][0]["placement"]["base_coverages"]
     assert result["variants"][0]["layout"]
     assert result["violations"] == []
-    assert result["repairs"] == []
+    assert result["repairs"]
+    assert all(
+        {"variant_id", "rule_id", "action", "item_keys", "text"} <= set(repair)
+        for repair in result["repairs"]
+    )
+    assert {
+        repair["action"]
+        for repair in result["repairs"]
+    } >= {"compact_runs_to_shared_corner"}
+    assert result["variants"][0]["violations"] == []
+    assert result["variants"][0]["repair_history"]
     assert result["scores"][0]["variant_id"] == "variant-l-1"
     assert result["output"]["status"] == "skeleton"
     assert result["output"]["layout_family"] == "L"
