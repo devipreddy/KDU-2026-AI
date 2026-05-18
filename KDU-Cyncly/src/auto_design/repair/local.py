@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -86,6 +87,10 @@ def _as_float(value: object, default: float = 0.0) -> float:
     if isinstance(value, int | float):
         return float(value)
     return default
+
+
+def _json_signature(payload: Mapping[str, object]) -> str:
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 
 def _placement(variant: dict[str, object]) -> dict[str, Any]:
@@ -309,6 +314,63 @@ def _sync_layout(variant: dict[str, object]) -> None:
     variant["layout"] = layout
 
 
+def _sync_diversity(variant: dict[str, object]) -> None:
+    placement = _placement(variant)
+    zone_plan = _as_mapping(variant.get("zone_plan"))
+    zone_wall_map = {
+        str(assignment.get("item")): str(assignment.get("wall"))
+        for assignment in _as_list(zone_plan.get("item_assignments"))
+        if isinstance(assignment, Mapping)
+        and assignment.get("item") in {
+            "dishwasher",
+            "double_sink",
+            "fridge",
+            "hood",
+            "single_sink",
+            "sink",
+            "stove",
+            "tall_cabinet",
+        }
+    }
+    run_sequences = {
+        f"{run.get('wall')}:{run.get('run_role')}": [
+            str(item.get("component"))
+            for item in _run_items(run)
+        ]
+        for run in _runs(variant)
+    }
+    component_offsets = {
+        str(item.get("component")): {
+            "wall": item.get("wall"),
+            "start_mm": item.get("start_mm"),
+            "end_mm": item.get("end_mm"),
+        }
+        for item in _all_items(variant)
+        if item.get("component") in {
+            "dishwasher",
+            "double_sink",
+            "fridge",
+            "single_sink",
+            "sink",
+            "stove",
+        }
+    }
+    signature = _json_signature(
+        {
+            "walls": zone_wall_map,
+            "sequences": run_sequences,
+            "offsets": component_offsets,
+        }
+    )
+    placement["diversity_signature"] = signature
+    variant["diversity"] = {
+        "signature": signature,
+        "zone_wall_map": zone_wall_map,
+        "run_sequences": run_sequences,
+        "component_offsets": component_offsets,
+    }
+
+
 def _recompute_summary(variant: dict[str, object]) -> None:
     placement = _placement(variant)
     runs = _runs(variant)
@@ -334,6 +396,7 @@ def _sync_variant(variant: dict[str, object], bounds: RoomBounds) -> None:
     _sync_overhead_positions(variant, bounds)
     _recompute_summary(variant)
     _sync_layout(variant)
+    _sync_diversity(variant)
 
 
 def _is_base_item(item: Mapping[str, object]) -> bool:

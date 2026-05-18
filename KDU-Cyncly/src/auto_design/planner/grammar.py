@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal, TypeAlias, cast
@@ -18,6 +19,18 @@ FAMILY_LABELS: Mapping[LayoutFamilyCode, str] = {
     "U": "U-shaped",
 }
 WALLS_PER_FAMILY: Mapping[LayoutFamilyCode, int] = {"I": 1, "L": 2, "U": 3}
+ADJACENT_WALL_PAIRS: tuple[tuple[WallAnchor, WallAnchor], ...] = (
+    ("north", "east"),
+    ("east", "south"),
+    ("south", "west"),
+    ("west", "north"),
+)
+U_WALL_SETS: tuple[tuple[WallAnchor, WallAnchor, WallAnchor], ...] = (
+    ("north", "east", "south"),
+    ("east", "south", "west"),
+    ("south", "west", "north"),
+    ("west", "north", "east"),
+)
 
 I_GRAMMAR_VARIANTS: tuple[tuple[StepSpec, ...], ...] = (
     (
@@ -40,6 +53,20 @@ I_GRAMMAR_VARIANTS: tuple[tuple[StepSpec, ...], ...] = (
         ("cleaning", "sink", 0, "Keep cleaning central for dishwasher adjacency later."),
         ("storage", "base_cabinets", 0, "Use base storage as a run terminator."),
         ("cooling", "fridge", 0, "Finish with cooling at the opposite edge."),
+    ),
+    (
+        ("cleaning", "sink", 0, "Start with cleaning near the entry side."),
+        ("preparation", "prep_counter", 0, "Keep prep immediately after the sink."),
+        ("cooking", "stove", 0, "Place cooking after prep for a direct workflow."),
+        ("storage", "base_cabinets", 0, "Use storage to buffer the cooling zone."),
+        ("cooling", "fridge", 0, "Terminate the run with refrigeration."),
+    ),
+    (
+        ("cooling", "fridge", 0, "Begin with cooling for quick grocery drop-off."),
+        ("preparation", "prep_counter", 0, "Add landing counter after refrigeration."),
+        ("cooking", "stove", 0, "Keep cooking near the middle of the wall."),
+        ("cleaning", "sink", 0, "Place cleaning after cooking with counter support."),
+        ("storage", "base_cabinets", 0, "End the run with base storage."),
     ),
 )
 
@@ -65,6 +92,20 @@ L_GRAMMAR_VARIANTS: tuple[tuple[StepSpec, ...], ...] = (
         ("storage", "base_cabinets", 1, "Continue the return with base storage."),
         ("cooling", "fridge", 1, "Terminate the return with cooling."),
     ),
+    (
+        ("cooling", "fridge", 0, "Anchor refrigeration on the primary outside edge."),
+        ("cooking", "stove", 0, "Keep cooking on the same leg with cabinet buffer."),
+        ("preparation", "corner_prep", 1, "Turn the corner into preparation space."),
+        ("cleaning", "sink", 1, "Place cleaning on the return for separation."),
+        ("storage", "base_cabinets", 1, "Finish the return with base storage."),
+    ),
+    (
+        ("storage", "base_cabinets", 0, "Start with storage to ground the primary run."),
+        ("cooking", "stove", 0, "Place cooking before the corner."),
+        ("cleaning", "sink", 1, "Move the wet zone onto the return leg."),
+        ("preparation", "prep_counter", 1, "Add prep counter after cleaning."),
+        ("cooling", "fridge", 1, "Use the return outside edge for refrigeration."),
+    ),
 )
 
 U_GRAMMAR_VARIANTS: tuple[tuple[StepSpec, ...], ...] = (
@@ -88,6 +129,20 @@ U_GRAMMAR_VARIANTS: tuple[tuple[StepSpec, ...], ...] = (
         ("preparation", "prep_counter", 1, "Use the bridge as shared prep space."),
         ("cleaning", "sink", 1, "Center cleaning on the bridge wall."),
         ("cooking", "stove", 2, "Place cooking on the final leg."),
+    ),
+    (
+        ("cooling", "fridge", 0, "Use the left leg for cooling and pantry flow."),
+        ("cleaning", "sink", 1, "Move cleaning to the bridge wall."),
+        ("storage", "base_cabinets", 1, "Add central storage beside cleaning."),
+        ("preparation", "prep_counter", 2, "Reserve the right leg for preparation."),
+        ("cooking", "stove", 2, "Finish the right leg with cooking."),
+    ),
+    (
+        ("cooking", "stove", 0, "Start the first leg with cooking."),
+        ("storage", "base_cabinets", 0, "Buffer cooking with base storage."),
+        ("preparation", "prep_counter", 1, "Use the bridge for prep circulation."),
+        ("cleaning", "sink", 2, "Put cleaning on the final leg."),
+        ("cooling", "fridge", 2, "Terminate the final leg with cooling."),
     ),
 )
 
@@ -262,6 +317,51 @@ def _runs_for_walls(
     return tuple(runs)
 
 
+def _candidate_wall_sets(
+    family: LayoutFamilyCode,
+    wall_runs: Mapping[WallAnchor, WallRunCandidate],
+) -> tuple[tuple[WallAnchor, ...], ...]:
+    if family == "I":
+        return tuple((wall,) for wall in wall_runs)
+    if family == "L":
+        return tuple(
+            pair for pair in ADJACENT_WALL_PAIRS
+            if all(wall in wall_runs for wall in pair)
+        )
+    return tuple(
+        walls for walls in U_WALL_SETS
+        if all(wall in wall_runs for wall in walls)
+    )
+
+
+def _ranked_wall_sets(
+    family: LayoutFamilyCode,
+    preferred_walls: tuple[WallAnchor, ...],
+    wall_runs: Mapping[WallAnchor, WallRunCandidate],
+    *,
+    seed: int | None,
+) -> tuple[tuple[WallAnchor, ...], ...]:
+    required_wall_count = WALLS_PER_FAMILY[family]
+    preferred = preferred_walls[:required_wall_count]
+    preferred_set = (preferred,) if len(preferred) == required_wall_count else ()
+    candidates = _candidate_wall_sets(family, wall_runs)
+    if not candidates and preferred_set:
+        candidates = preferred_set
+
+    rest = tuple(candidate for candidate in candidates if candidate not in preferred_set)
+    ranked = sorted(
+        rest,
+        key=lambda walls: sum(
+            wall_runs[wall].longest_segment[1] - wall_runs[wall].longest_segment[0]
+            for wall in walls
+        ),
+        reverse=True,
+    )
+    if seed is not None:
+        random.Random(seed).shuffle(ranked)
+    return (*preferred_set, *ranked)
+
+
 def _steps_for_variant(
     walls: tuple[WallAnchor, ...],
     specs: tuple[StepSpec, ...],
@@ -298,27 +398,45 @@ def generate_topology_templates(
     feasibility: Mapping[str, object],
     *,
     max_variants: int = 5,
+    seed: int | None = None,
 ) -> tuple[KitchenTopologyTemplate, ...]:
     family = _family_from_payload(feasibility)
     if family is None or max_variants <= 0:
         return ()
 
     wall_runs = _wall_runs_from_payload(feasibility)
-    walls = _candidate_walls_from_payload(feasibility, family)
-    if not walls:
-        walls = _fallback_walls(family, wall_runs)
+    preferred_walls = _candidate_walls_from_payload(feasibility, family)
+    if not preferred_walls:
+        preferred_walls = _fallback_walls(family, wall_runs)
     required_wall_count = WALLS_PER_FAMILY[family]
-    if len(walls) < required_wall_count:
+    if len(preferred_walls) < required_wall_count:
         return ()
-    walls = walls[:required_wall_count]
+    preferred_walls = preferred_walls[:required_wall_count]
 
-    if any(wall not in wall_runs for wall in walls):
+    if any(wall not in wall_runs for wall in preferred_walls):
         return ()
 
-    runs = _runs_for_walls(family, walls, wall_runs)
-    grammar_variants = GRAMMAR_VARIANTS[family][:max_variants]
+    wall_sets = _ranked_wall_sets(
+        family,
+        preferred_walls,
+        wall_runs,
+        seed=seed,
+    )
+    if not wall_sets:
+        return ()
+
+    grammar_variants = list(GRAMMAR_VARIANTS[family])
+    if seed is not None:
+        random.Random(seed + 17).shuffle(grammar_variants)
+
+    candidates = [
+        (walls, specs)
+        for walls in wall_sets
+        for specs in grammar_variants
+    ]
     templates: list[KitchenTopologyTemplate] = []
-    for index, specs in enumerate(grammar_variants, start=1):
+    for index, (walls, specs) in enumerate(candidates[:max_variants], start=1):
+        runs = _runs_for_walls(family, walls, wall_runs)
         template_id = f"template-{family.lower()}-{index}"
         templates.append(
             KitchenTopologyTemplate(

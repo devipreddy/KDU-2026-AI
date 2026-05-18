@@ -38,10 +38,12 @@ def test_planning_graph_runs_required_pipeline_in_order() -> None:
     assert result["feasibility"]["status"] == "feasible"
     assert result["feasibility"]["selected_family"] == "L"
     assert result["feasibility"]["topology_fits"]["L"]["feasible"] is True
-    assert len(result["variants"]) == 3
+    assert len(result["variants"]) == 5
     assert result["variants"][0]["id"] == "variant-l-1"
     assert result["variants"][0]["family"] == "L"
     assert result["variants"][0]["status"] == "placed_template"
+    assert result["variants"][0]["variant_seed"]
+    assert result["variants"][0]["diversity"]["signature"]
     assert result["variants"][0]["topology"]["family"] == "L"
     assert result["variants"][0]["zone_plan"]["family"] == "L"
     assert result["variants"][0]["zone_plan"]["item_assignments"]
@@ -65,7 +67,7 @@ def test_planning_graph_runs_required_pipeline_in_order() -> None:
     assert result["output"]["status"] == "skeleton"
     assert result["output"]["layout_family"] == "L"
     assert result["output"]["feasibility_status"] == "feasible"
-    assert result["output"]["variant_count"] == 3
+    assert result["output"]["variant_count"] == 5
     assert result["output"]["ready_for_render"] is False
 
 

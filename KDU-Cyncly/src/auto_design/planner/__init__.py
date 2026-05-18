@@ -40,6 +40,13 @@ from auto_design.planner.zones import (
     ZoneAssignment,
     plan_zones_for_template,
 )
+from auto_design.planner.variants import (
+    MAX_VARIANT_COUNT,
+    MIN_VARIANT_COUNT,
+    GeneratedVariant,
+    generate_layout_variants_async,
+    variant_seed_for,
+)
 
 __all__ = [
     "MIN_I_RUN_MM",
@@ -53,11 +60,14 @@ __all__ = [
     "TopologyFit",
     "FAMILY_LABELS",
     "GRAMMAR_VARIANTS",
+    "GeneratedVariant",
     "GrammarStep",
     "KitchenTopologyTemplate",
     "ItemZoneAssignment",
     "MacroZonePlan",
     "MAX_CONTINUITY_GAP_MM",
+    "MAX_VARIANT_COUNT",
+    "MIN_VARIANT_COUNT",
     "BaseCoverage",
     "PlacedItem",
     "PlacementPlan",
@@ -67,11 +77,13 @@ __all__ = [
     "analyze_topology_fits",
     "generate_topology_templates",
     "generate_placement_plan",
+    "generate_layout_variants_async",
     "plan_zones_for_template",
     "required_appliance_footprint_mm",
     "required_footprint_items",
     "RunSegmentTemplate",
     "WALLS_PER_FAMILY",
+    "variant_seed_for",
     "ZONE_ORDER",
     "ZoneAssignment",
 ]

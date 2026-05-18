@@ -14,14 +14,13 @@ from auto_design.catalog.retrieval import (
 )
 from auto_design.catalog.service import CatalogService
 from auto_design.planner.feasibility import analyze_feasibility
-from auto_design.planner.grammar import generate_topology_templates
-from auto_design.planner.placement import generate_placement_plan
-from auto_design.planner.zones import plan_zones_for_template
+from auto_design.planner.variants import generate_layout_variants_async
 from auto_design.repair import (
     flatten_repair_actions,
     flatten_repair_violations,
     repair_variants,
 )
+from auto_design.scoring import rank_variants
 from auto_design.schemas.input import DesignInput
 from auto_design.schemas.intent import StructuredIntent
 from auto_design.validation import flatten_validation_results, validate_variants
@@ -169,43 +168,15 @@ def analyze_feasibility_node(state: PlanningState) -> PlanningState:
     }
 
 
-def generate_variants_node(state: PlanningState) -> PlanningState:
+async def generate_variants_node(state: PlanningState) -> PlanningState:
     intent = state["intent"]
     feasibility = state.get("feasibility", {})
-    family = feasibility.get("selected_family") or intent.layout_family
-    templates = generate_topology_templates(feasibility)
-    variants: list[dict[str, object]] = []
-    for index, template in enumerate(templates, start=1):
-        zone_plan = plan_zones_for_template(template, intent)
-        placement_plan = generate_placement_plan(
-            state["input"].environment,
-            template,
-            zone_plan,
-            state["catalog"],
-        )
-        variants.append(
-            {
-                "id": f"variant-{template.family.lower()}-{index}",
-                "family": template.family,
-                "family_label": template.family_label,
-                "status": "placed_template",
-                "template_id": template.id,
-                "topology": template.to_payload(),
-                "zone_plan": zone_plan.to_payload(),
-                "placement": placement_plan.to_payload(),
-                "layout": placement_plan.layout_payload(),
-                "notes": "Continuous snapped cabinet and appliance runs generated.",
-            }
-        )
-    if not variants and family is not None:
-        variants = [
-            {
-                "id": "variant-template-unavailable",
-                "family": family,
-                "status": "template_unavailable",
-                "notes": "No procedural topology template could be derived from feasibility.",
-            }
-        ]
+    variants = await generate_layout_variants_async(
+        design_input=state["input"],
+        intent=intent,
+        feasibility=feasibility,
+        catalog=state["catalog"],
+    )
     return {
         "variants": variants,
         "trace": _trace(state, "generate_variants"),
@@ -254,16 +225,15 @@ def repair_variants_node(state: PlanningState) -> PlanningState:
 
 
 def score_variants_node(state: PlanningState) -> PlanningState:
-    variants = state.get("variants", [])
+    variants, scores = rank_variants(
+        state.get("variants", []),
+        intent=state["intent"],
+        catalog=state["catalog"],
+        feasibility=state.get("feasibility", {}),
+    )
     return {
-        "scores": [
-            {
-                "variant_id": str(variant.get("id", "")),
-                "score": 0.0,
-                "status": "unscored_skeleton",
-            }
-            for variant in variants
-        ],
+        "variants": variants,
+        "scores": scores,
         "trace": _trace(state, "score"),
     }
 

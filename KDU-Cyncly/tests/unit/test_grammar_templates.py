@@ -90,7 +90,7 @@ def feasibility_payload_for(family: str) -> dict[str, object]:
 def test_single_wall_grammar_generates_only_i_family_templates() -> None:
     templates = generate_topology_templates(feasibility_payload_for("I"))
 
-    assert len(templates) == 3
+    assert len(templates) == 5
     assert {template.family for template in templates} == {"I"}
     assert all(len(template.walls) == 1 for template in templates)
     assert all(len(template.runs) == 1 for template in templates)
@@ -100,7 +100,7 @@ def test_single_wall_grammar_generates_only_i_family_templates() -> None:
 def test_l_shape_grammar_generates_only_l_family_templates() -> None:
     templates = generate_topology_templates(feasibility_payload_for("L"))
 
-    assert len(templates) == 3
+    assert len(templates) == 5
     assert {template.family for template in templates} == {"L"}
     assert all(len(template.walls) == 2 for template in templates)
     assert all(
@@ -118,7 +118,7 @@ def test_l_shape_grammar_generates_only_l_family_templates() -> None:
 def test_u_shape_grammar_generates_only_u_family_templates() -> None:
     templates = generate_topology_templates(feasibility_payload_for("U"))
 
-    assert len(templates) == 3
+    assert len(templates) == 5
     assert {template.family for template in templates} == {"U"}
     assert all(len(template.walls) == 3 for template in templates)
     assert all(
